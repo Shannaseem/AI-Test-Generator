@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <title>AI Test Generator Pro | Developed by Shan</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="app-container">
+      <header class="main-header">
+        <div class="container header-content">
+          <div class="logo-area">
+            <div class="logo-icon-wrapper">
+              <i class="fa-solid fa-graduation-cap logo-icon"></i>
+            </div>
+            <div class="logo-text">
+              <h1>Test Generator <span>PRO</span></h1>
+              <p>AI-Powered Exam Paper Creator</p>
+            </div>
+          </div>
+          <div class="status-area" id="networkStatus">
+            <span class="status-pulse" id="networkDot"></span>
+            <span id="networkText">System Online</span>
+          </div>
+        </div>
+      </header>
+
+      <main class="main-content container">
+        <form id="testForm" class="dashboard-grid">
+          <aside class="panel settings-panel slide-up-1">
+            <div class="panel-header">
+              <div class="header-title">
+                <i class="fa-solid fa-sliders-h header-icon"></i>
+                <h2>Paper Config</h2>
+              </div>
+            </div>
+            <div class="panel-body custom-scrollbar">
+              <div class="input-grid">
+                <div class="input-group full">
+                  <input
+                    type="text"
+                    id="academyName"
+                    required
+                    placeholder=" "
+                  />
+                  <label
+                    >Academy / School Name <span class="req">*</span></label
+                  >
+                </div>
+
+                <div class="input-group">
+                  <input type="text" id="subject" required placeholder=" " />
+                  <label>Subject <span class="req">*</span></label>
+                </div>
+
+                <div class="input-group">
+                  <input type="text" id="className" required placeholder=" " />
+                  <label>Class / Grade <span class="req">*</span></label>
+                </div>
+
+                <div class="input-group">
+                  <input type="date" id="testDate" required />
+                  <label class="active-label"
+                    >Test Date <span class="req">*</span></label
+                  >
+                </div>
+
+                <div class="input-group">
+                  <input
+                    type="number"
+                    id="timeAllowed"
+                    min="5"
+                    max="180"
+                    step="5"
+                    required
+                    placeholder=" "
+                  />
+                  <label>Time Allowed (Min) <span class="req">*</span></label>
+                </div>
+
+                <div class="input-group">
+                  <input type="text" id="syllabus" required placeholder=" " />
+                  <label>Syllabus / Chapter <span class="req">*</span></label>
+                </div>
+
+                <div class="input-group">
+                  <input type="text" id="longMarks" required placeholder=" " />
+                  <label>Long Q. Marks <span class="req">*</span></label>
+                </div>
+
+                <div class="input-group full">
+                  <div class="select-wrapper">
+                    <select id="templateStyle" required>
+                      <option value="table">
+                        Table Format (Single Column)
+                      </option>
+                      <option value="column">
+                        Professional Format (Two Columns)
+                      </option>
+                    </select>
+                    <label class="active-label"
+                      >Template Style <span class="req">*</span></label
+                    >
+                    <i class="fa-solid fa-chevron-down select-icon"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </aside>
+
+          <section class="panel content-panel slide-up-2">
+            <div class="panel-header">
+              <div class="header-title">
+                <i class="fa-solid fa-brain header-icon"></i>
+                <h2>Source Material</h2>
+              </div>
+              <span class="badge">Text, PDFs & Images</span>
+            </div>
+
+            <div class="panel-body smart-input-container">
+              <div class="smart-input-box" id="dropZone">
+                <textarea
+                  id="bookText"
+                  class="custom-scrollbar"
+                  placeholder="Type or paste your text here...&#10;Or drag and drop PDFs / Images directly into this area."
+                ></textarea>
+
+                <div
+                  id="previewContainer"
+                  class="file-previews custom-scrollbar hidden"
+                ></div>
+
+                <div class="smart-box-footer">
+                  <button
+                    type="button"
+                    class="attach-btn"
+                    onclick="document.getElementById('fileInput').click()"
+                  >
+                    <i class="fa-solid fa-paperclip"></i> Add Files
+                  </button>
+                  <span class="limit-info">Max 10 files (PDFs/Images)</span>
+                  <input
+                    type="file"
+                    id="fileInput"
+                    multiple
+                    accept=".pdf, image/png, image/jpeg, image/jpg, image/webp"
+                    class="hidden"
+                  />
+                </div>
+              </div>
+
+              <div class="action-zone">
+                <div id="progressContainer" class="progress-box hidden">
+                  <div class="progress-labels">
+                    <span id="progressText" class="progress-status"
+                      >Analyzing material...</span
+                    >
+                    <span id="progressPercent" class="progress-value">0%</span>
+                  </div>
+                  <div class="progress-track">
+                    <div id="progressBar" class="progress-fill"></div>
+                  </div>
+                </div>
+
+                <div id="statusArea" class="hidden status-notification">
+                  <i class="fa-solid fa-circle-info status-icon"></i>
+                  <span id="statusMessage">Ready to generate.</span>
+                </div>
+
+                <button type="submit" id="generateBtn" class="generate-btn">
+                  <i class="fa-solid fa-wand-magic-sparkles"></i>
+                  <span>Generate AI Test</span>
+                </button>
+              </div>
+            </div>
+          </section>
+        </form>
+      </main>
+
+      <footer class="main-footer">
+        <div class="container footer-content">
+          <p>&copy; 2026 Developed by Muhammad Shan Naseem .</p>
+          <p class="disclaimer">
+            <i class="fa-solid fa-shield-halved"></i> Please verify important
+            questions before printing.
+          </p>
+        </div>
+      </footer>
+    </div>
+    <script src="script.js"></script>
+  </body>
+</html>

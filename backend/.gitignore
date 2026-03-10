@@ -1,0 +1,18 @@
+# Sensitive Info (API Keys)
+backend/.env
+.env
+**/.env
+
+# Python Caches & Virtual Envs
+__pycache__/
+*.pyc
+venv/
+env/
+.venv/
+
+# Generated Output Files
+backend/generated_test.docx
+
+# OS Files
+.DS_Store
+Thumbs.db
