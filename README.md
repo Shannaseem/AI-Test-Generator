@@ -1,4 +1,3 @@
-````markdown
 # 🚀 AI Test Generator PRO
 
 An intelligent, multimodal, and fully automated exam paper creator developed by **Muhammad Shan Naseem**. This platform empowers educators, academies, and teachers to instantly generate high-quality, professional test papers in MS Word (`.docx`) format using Google's state-of-the-art Gemini 2.5 Flash AI.
@@ -59,6 +58,7 @@ Follow these steps to run the project locally on your machine.
 git clone [https://github.com/Shannaseem/AI-Test-Generator.git](https://github.com/Shannaseem/AI-Test-Generator.git)
 cd AI-Test-Generator
 ```
+
 ````
 
 ### Step 2: Backend Setup
@@ -127,4 +127,5 @@ AI-Test-Generator/
 ├── .gitignore                # Security rules
 └── README.md                 # Project Documentation
 
-```
+
+````
