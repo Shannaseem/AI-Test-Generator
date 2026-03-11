@@ -203,10 +203,13 @@ async function processTestGeneration(formData, isAutoRetry = false) {
   }
 
   try {
-    const response = await fetch("http://127.0.0.1:8000/generate-test", {
-      method: "POST",
-      body: formData,
-    });
+    const response = await fetch(
+      "https://ai-test-generator-2hsf.onrender.com/generate-test",
+      {
+        method: "POST",
+        body: formData,
+      },
+    );
 
     if (!response.ok) {
       const errText = await response.text();
