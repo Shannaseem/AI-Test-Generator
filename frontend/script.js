@@ -230,7 +230,6 @@ async function processTestGeneration(formData, isAutoRetry = false) {
 
           if (waitSeconds <= 0) {
             clearInterval(countdownInterval);
-            // 🚀 PERMANENT FIX: Bina refresh kiye function ko dobara trigger karna
             processTestGeneration(formData, true);
           }
         }, 1000);
@@ -241,8 +240,10 @@ async function processTestGeneration(formData, isAutoRetry = false) {
 
     const blob = await response.blob();
     let filename = "AI_Generated_Test.docx";
+
+    // 🚀 THE FIX: Removed strict "attachment" check
     const disposition = response.headers.get("Content-Disposition");
-    if (disposition && disposition.indexOf("attachment") !== -1) {
+    if (disposition && disposition.includes("filename")) {
       const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
       const matches = filenameRegex.exec(disposition);
       if (matches != null && matches[1]) {
