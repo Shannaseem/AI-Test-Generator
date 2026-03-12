@@ -8,12 +8,14 @@ import os
 
 app = FastAPI()
 
+# 🚀 THE FIX: expose_headers add karna bohat zaroori tha taake frontend file ka naam parh sake
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["Content-Disposition"]  # <-- Yeh line add ki gayi hai
 )
 
 @app.post("/generate-test")
@@ -62,8 +64,13 @@ async def generate_test_endpoint(
     )
     print("✅ MS Word final exam file tayyar ho gayi hai.")
     
+    # File name mein se spaces aur slashes ko underscore (_) se replace kar rahe hain
+    safe_class = class_name.replace(" ", "_").replace("/", "_").replace("\\", "_")
+    safe_syllabus = syllabus.replace(" ", "_").replace("/", "_").replace("\\", "_")
+    dynamic_name = f"{safe_class}_{safe_syllabus}_Test.docx"
+    
     return FileResponse(
         output_file, 
         media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document", 
-        filename="Generated_Test.docx"
+        filename=dynamic_name
     )
