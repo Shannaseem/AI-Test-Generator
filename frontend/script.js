@@ -191,12 +191,10 @@ async function processTestGeneration(formData, isAutoRetry = false) {
     : '<i class="fa-solid fa-spinner fa-spin"></i> <span>Generating...</span>';
   statusArea.classList.add("hidden");
 
-  // Pehle se chalne wala timer khatam karo agar hai
   if (countdownInterval) clearInterval(countdownInterval);
 
   if (!isAutoRetry) startProgressBar();
   else {
-    // Retry ke waqt progress bar ko restart karo
     document.getElementById("progressText").innerText =
       "Restarting AI analysis...";
     document.getElementById("progressBar").classList.remove("error-bar");
@@ -239,22 +237,22 @@ async function processTestGeneration(formData, isAutoRetry = false) {
     }
 
     const blob = await response.blob();
-    let filename = "AI_Generated_Test.docx";
 
-    // 🚀 THE FIX: Removed strict "attachment" check
-    const disposition = response.headers.get("Content-Disposition");
-    if (disposition && disposition.includes("filename")) {
-      const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
-      const matches = filenameRegex.exec(disposition);
-      if (matches != null && matches[1]) {
-        filename = matches[1].replace(/['"]/g, "");
-      }
-    }
+    // 🚀 THE FIX: Backend ki bajaye seedha Frontend se clean filename generate karna!
+    const classVal = document.getElementById("className").value.trim();
+    const subjectVal = document.getElementById("subject").value.trim();
+    const syllabusVal = document.getElementById("syllabus").value.trim();
+
+    // Windows me file name me yeh characters nahi ho sakte, is liye inko hata rahe hain
+    const cleanStr = (str) => str.replace(/[\\/:*?"<>|]/g, "-");
+
+    // Perfect format: "ICS part I computer chapter no 3.docx"
+    const filename = `${cleanStr(classVal)} ${cleanStr(subjectVal)} ${cleanStr(syllabusVal)}.docx`;
 
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = filename;
+    a.download = filename; // Yahan fresh clean naam apply hoga
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -278,6 +276,9 @@ async function processTestGeneration(formData, isAutoRetry = false) {
   }
 }
 
+// ==========================================
+// FORM SUBMIT LISTENER
+// ==========================================
 document.getElementById("testForm").addEventListener("submit", function (e) {
   e.preventDefault();
 
