@@ -11,7 +11,8 @@ from docx.oxml.shared import OxmlElement, qn
 def clean_text(text):
     return re.sub(r'^\d+[\.\)]\s*', '', str(text)).strip()
 
-def generate_word_file(academy_name, subject, class_name, test_date, time_allowed, syllabus, long_q_marks, ai_data, template_style="table"):
+# 🚀 NAYE PARAMETERS ADD KIYE GAYE HAIN (short_total, short_attempt, etc.)
+def generate_word_file(academy_name, subject, class_name, test_date, time_allowed, syllabus, long_q_marks, ai_data, template_style, short_total="8", short_attempt="5", long_total="3", long_attempt="2"):
     doc = Document()
     
     # --- 1. SETUP FIRST SECTION ---
@@ -36,14 +37,27 @@ def generate_word_file(academy_name, subject, class_name, test_date, time_allowe
     short_qs = ai_data.get("short_qs", [])
     long_qs = ai_data.get("long_qs", [])
     
-    mcq_total = len(mcqs) * 1  
-    short_total = len(short_qs) * 2  
+    # 🚀 DYNAMIC MARKS CALCULATION
+    mcq_marks = len(mcqs) * 1  
+    
     try:
-        long_q_val = sum([int(m.strip()) for m in long_q_marks.split('+')])
+        short_attempt_int = int(short_attempt)
+    except:
+        short_attempt_int = len(short_qs)
+    short_marks = short_attempt_int * 2  
+    
+    try:
+        long_q_val = sum([int(m.strip()) for m in str(long_q_marks).split('+')])
     except:
         long_q_val = 9
-    long_total = len(long_qs) * long_q_val
-    total_marks = mcq_total + short_total + long_total
+        
+    try:
+        long_attempt_int = int(long_attempt)
+    except:
+        long_attempt_int = len(long_qs)
+        
+    long_marks = long_attempt_int * long_q_val
+    total_marks = mcq_marks + short_marks + long_marks
 
     try:
         dt_obj = datetime.datetime.strptime(test_date, "%Y-%m-%d")
@@ -107,15 +121,13 @@ def generate_word_file(academy_name, subject, class_name, test_date, time_allowe
     r_mval.underline = True
 
     # ==========================================
-    # LOGIC: TABLE FORMAT VS 2-COLUMN FORMAT (Only for MCQs)
+    # MCQs SECTION
     # ==========================================
     if template_style == "column":
         p_mcq_head = doc.add_paragraph()
-        p_mcq_head.paragraph_format.space_after = Pt(6) # Heading ke baad thori si space
-        run_l = p_mcq_head.add_run(f'Multiple Choice Questions ({mcq_total} Marks)')
+        p_mcq_head.paragraph_format.space_after = Pt(6) 
+        run_l = p_mcq_head.add_run(f'Multiple Choice Questions ({mcq_marks} Marks)')
         run_l.bold = True; run_l.font.size = Pt(14) 
-
-        # Yahan se Q1. Choose correct answer nikal diya gaya hai
 
         section_2 = doc.add_section(WD_SECTION_START.CONTINUOUS)
         sectPr2 = section_2._sectPr
@@ -145,20 +157,16 @@ def generate_word_file(academy_name, subject, class_name, test_date, time_allowe
             
             doc.paragraphs[-1].paragraph_format.space_after = Pt(2) 
 
-        # Back to 1 Column BEFORE Short Questions
         section_3 = doc.add_section(WD_SECTION_START.CONTINUOUS)
         sectPr3 = section_3._sectPr
         cols3 = sectPr3.xpath('./w:cols')[0]
         cols3.set(qn('w:num'), '1')
 
     else:
-        # --- TABLE FORMAT (MCQs Only) ---
         p_mcq_head = doc.add_paragraph()
-        p_mcq_head.paragraph_format.space_after = Pt(6) # Heading ke baad thori si space
-        run_l = p_mcq_head.add_run(f'Multiple Choice Questions ({mcq_total} Marks)')
+        p_mcq_head.paragraph_format.space_after = Pt(6) 
+        run_l = p_mcq_head.add_run(f'Multiple Choice Questions ({mcq_marks} Marks)')
         run_l.bold = True; run_l.font.size = Pt(14) 
-
-        # Yahan se bhi Q1. Choose correct answer nikal diya gaya hai
 
         table = doc.add_table(rows=1, cols=6)
         table.style = 'Table Grid'
@@ -199,12 +207,20 @@ def generate_word_file(academy_name, subject, class_name, test_date, time_allowe
             row_cells[5].text = clean_text(m.get('d', ''))
 
     # ==========================================
-    # COMMON SHORT QUESTIONS
+    # 🚀 DYNAMIC SHORT QUESTIONS HEADING
     # ==========================================
     short_heading = doc.add_paragraph()
     short_heading.paragraph_format.space_before = Pt(8) 
-    r_sq = short_heading.add_run(f'Short Questions (2 x {len(short_qs)} = {short_total})')
+    
+    # Text Format: "Short Questions (Attempt any 5 out of 8)      10 Marks"
+    r_sq = short_heading.add_run(f'Short Questions (Attempt any {short_attempt} out of {short_total})')
     r_sq.bold = True; r_sq.font.size = Pt(14) 
+    
+    # Right align marks using tab
+    tabs_sq = short_heading.paragraph_format.tab_stops
+    tabs_sq.add_tab_stop(Inches(7.67), WD_TAB_ALIGNMENT.RIGHT)
+    r_sq_marks = short_heading.add_run(f'\t{short_marks} Marks')
+    r_sq_marks.bold = True
     
     for idx, sq in enumerate(short_qs, start=1):
         p = doc.add_paragraph()
@@ -217,12 +233,19 @@ def generate_word_file(academy_name, subject, class_name, test_date, time_allowe
         p.add_run(clean_text(sq.get('text', '')))
 
     # ==========================================
-    # COMMON LONG QUESTIONS
+    # 🚀 DYNAMIC LONG QUESTIONS HEADING
     # ==========================================
     long_heading = doc.add_paragraph()
     long_heading.paragraph_format.space_before = Pt(8) 
-    r_lq = long_heading.add_run(f'Long Question ({long_q_marks} x {len(long_qs)} = {long_total})')
+    
+    # Text Format: "Long Questions (Attempt any 2 out of 3)      18 Marks"
+    r_lq = long_heading.add_run(f'Long Questions (Attempt any {long_attempt} out of {long_total})')
     r_lq.bold = True; r_lq.font.size = Pt(14) 
+    
+    tabs_lq = long_heading.paragraph_format.tab_stops
+    tabs_lq.add_tab_stop(Inches(7.67), WD_TAB_ALIGNMENT.RIGHT)
+    r_lq_marks = long_heading.add_run(f'\t{long_marks} Marks')
+    r_lq_marks.bold = True
     
     for idx, lq in enumerate(long_qs, start=1):
         p = doc.add_paragraph()
@@ -232,7 +255,10 @@ def generate_word_file(academy_name, subject, class_name, test_date, time_allowe
         
         r_num = p.add_run(f"{idx}. ")
         r_num.bold = True
-        p.add_run(clean_text(lq.get('text', '')))
+        
+        # Agar parts hain toh AI \n bheje ga, usay Word ke new lines me change kar rahay hain
+        q_text = clean_text(lq.get('text', ''))
+        p.add_run(q_text)
 
     output_path = "generated_test.docx"
     doc.save(output_path)

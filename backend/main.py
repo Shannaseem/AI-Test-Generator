@@ -8,14 +8,13 @@ import os
 
 app = FastAPI()
 
-# 🚀 THE FIX: expose_headers add karna bohat zaroori tha taake frontend file ka naam parh sake
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
-    expose_headers=["Content-Disposition"]  # <-- Yeh line add ki gayi hai
+    expose_headers=["Content-Disposition"]
 )
 
 @app.post("/generate-test")
@@ -28,6 +27,15 @@ async def generate_test_endpoint(
     syllabus: str = Form(...),
     long_q_marks: str = Form(...),
     template_style: str = Form("table"),
+    
+    # 🚀 NAYE FIELDS
+    short_total: str = Form("8"),
+    short_attempt: str = Form("5"),
+    long_total: str = Form("3"),
+    long_attempt: str = Form("2"),
+    long_parts: str = Form("no"),
+    magic_prompt: Optional[str] = Form(""),
+    
     text: Optional[str] = Form(""),
     files: List[UploadFile] = File([]) 
 ):
@@ -40,34 +48,32 @@ async def generate_test_endpoint(
             if file.filename:
                 f_bytes = await file.read()
                 f_mime = file.content_type
-                
-                # Sirf PDF aur Images allow ki gayi hain, baqi ignore ho jayengi
                 if f_mime in ["application/pdf", "image/png", "image/jpeg", "image/jpg", "image/webp"]:
-                    files_data.append({
-                        "mime_type": f_mime, 
-                        "data": f_bytes,
-                        "filename": file.filename
-                    })
-                    print(f"✅ Fast File Added: {file.filename} ({f_mime})")
-                else:
-                    print(f"⚠️ Unsupported file ignored: {file.filename}")
+                    files_data.append({"mime_type": f_mime, "data": f_bytes, "filename": file.filename})
     
     try:
-        ai_data = extract_test_data(text, files_data)
+        # AI Service ko naya data pass kiya ja raha hai
+        ai_data = extract_test_data(
+            text, files_data, 
+            short_total, short_attempt, long_total, long_attempt, long_parts, magic_prompt
+        )
         print("✅ AI ne final test data successfully extract kar liya hai.")
     except Exception as e:
         error_message = str(e)
         raise HTTPException(status_code=500, detail=error_message)
     
     output_file = generate_word_file(
-        academy_name, subject, class_name, test_date, time_allowed, syllabus, long_q_marks, ai_data, template_style
+        academy_name, subject, class_name, test_date, time_allowed, syllabus, 
+        long_q_marks, ai_data, template_style,
+        # Yeh naya data Word Generator ko bhi bhej rahe hain
+        short_total, short_attempt, long_total, long_attempt
     )
-    print("✅ MS Word final exam file tayyar ho gayi hai.")
     
-    # File name mein se spaces aur slashes ko underscore (_) se replace kar rahe hain
     safe_class = class_name.replace(" ", "_").replace("/", "_").replace("\\", "_")
+    safe_subject = subject.replace(" ", "_").replace("/", "_").replace("\\", "_")
     safe_syllabus = syllabus.replace(" ", "_").replace("/", "_").replace("\\", "_")
-    dynamic_name = f"{safe_class}_{safe_syllabus}_Test.docx"
+    
+    dynamic_name = f"{safe_class}_{safe_subject}_{safe_syllabus}.docx"
     
     return FileResponse(
         output_file, 

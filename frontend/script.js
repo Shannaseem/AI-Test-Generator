@@ -279,6 +279,10 @@ async function processTestGeneration(formData, isAutoRetry = false) {
 // ==========================================
 // FORM SUBMIT LISTENER
 // ==========================================
+
+// ==========================================
+// FORM SUBMIT LISTENER
+// ==========================================
 document.getElementById("testForm").addEventListener("submit", function (e) {
   e.preventDefault();
 
@@ -295,6 +299,7 @@ document.getElementById("testForm").addEventListener("submit", function (e) {
   }
 
   const formData = new FormData();
+  // Purana Data
   formData.append("academy_name", document.getElementById("academyName").value);
   formData.append("subject", document.getElementById("subject").value);
   formData.append("class_name", document.getElementById("className").value);
@@ -310,6 +315,20 @@ document.getElementById("testForm").addEventListener("submit", function (e) {
     document.getElementById("templateStyle").value,
   );
   formData.append("text", textVal);
+
+  // 🚀 NAYA DATA: Short, Long aur Magic Box
+  formData.append("short_total", document.getElementById("shortTotal").value);
+  formData.append(
+    "short_attempt",
+    document.getElementById("shortAttempt").value,
+  );
+  formData.append("long_total", document.getElementById("longTotal").value);
+  formData.append("long_attempt", document.getElementById("longAttempt").value);
+  formData.append("long_parts", document.getElementById("longParts").value);
+  formData.append(
+    "magic_prompt",
+    document.getElementById("magicPrompt").value.trim(),
+  );
 
   selectedFiles.forEach((file) => {
     formData.append("files", file);

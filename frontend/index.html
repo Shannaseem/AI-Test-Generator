@@ -63,24 +63,20 @@
                     >Academy / School Name <span class="req">*</span></label
                   >
                 </div>
-
                 <div class="input-group">
                   <input type="text" id="subject" required placeholder=" " />
                   <label>Subject <span class="req">*</span></label>
                 </div>
-
                 <div class="input-group">
                   <input type="text" id="className" required placeholder=" " />
                   <label>Class / Grade <span class="req">*</span></label>
                 </div>
-
                 <div class="input-group">
                   <input type="date" id="testDate" required />
                   <label class="active-label"
                     >Test Date <span class="req">*</span></label
                   >
                 </div>
-
                 <div class="input-group">
                   <input
                     type="number"
@@ -93,29 +89,89 @@
                   />
                   <label>Time Allowed (Min) <span class="req">*</span></label>
                 </div>
-
-                <div class="input-group">
+                <div class="input-group full">
                   <input type="text" id="syllabus" required placeholder=" " />
                   <label>Syllabus / Chapter <span class="req">*</span></label>
                 </div>
 
                 <div class="input-group">
-                  <input type="text" id="longMarks" required placeholder=" " />
-                  <label>Long Q. Marks <span class="req">*</span></label>
+                  <input
+                    type="number"
+                    id="shortTotal"
+                    min="1"
+                    required
+                    placeholder=" "
+                    value="8"
+                  />
+                  <label>Total Short Qs <span class="req">*</span></label>
+                </div>
+                <div class="input-group">
+                  <input
+                    type="number"
+                    id="shortAttempt"
+                    min="1"
+                    required
+                    placeholder=" "
+                    value="5"
+                  />
+                  <label>Attempt Short Qs <span class="req">*</span></label>
+                </div>
+
+                <div class="input-group">
+                  <input
+                    type="number"
+                    id="longTotal"
+                    min="1"
+                    required
+                    placeholder=" "
+                    value="3"
+                  />
+                  <label>Total Long Qs <span class="req">*</span></label>
+                </div>
+                <div class="input-group">
+                  <input
+                    type="number"
+                    id="longAttempt"
+                    min="1"
+                    required
+                    placeholder=" "
+                    value="2"
+                  />
+                  <label>Attempt Long Qs <span class="req">*</span></label>
                 </div>
 
                 <div class="input-group full">
                   <div class="select-wrapper">
-                    <select id="templateStyle" required>
-                      <option value="table">
-                        Table Format (Single Column)
-                      </option>
-                      <option value="column">
-                        Professional Format (Two Columns)
-                      </option>
+                    <select id="longParts" required>
+                      <option value="no">No Parts (Single Question)</option>
+                      <option value="yes">Yes (Divide into Part A & B)</option>
                     </select>
                     <label class="active-label"
-                      >Template Style <span class="req">*</span></label
+                      >Long Q Format <span class="req">*</span></label
+                    >
+                    <i class="fa-solid fa-chevron-down select-icon"></i>
+                  </div>
+                </div>
+
+                <div class="input-group">
+                  <input
+                    type="text"
+                    id="longMarks"
+                    required
+                    placeholder=" "
+                    value="9"
+                  />
+                  <label>Marks per Long Q <span class="req">*</span></label>
+                </div>
+
+                <div class="input-group">
+                  <div class="select-wrapper">
+                    <select id="templateStyle" required>
+                      <option value="table">Table Format</option>
+                      <option value="column">Two Columns</option>
+                    </select>
+                    <label class="active-label"
+                      >Style <span class="req">*</span></label
                     >
                     <i class="fa-solid fa-chevron-down select-icon"></i>
                   </div>
@@ -128,7 +184,7 @@
             <div class="panel-header">
               <div class="header-title">
                 <i class="fa-solid fa-brain header-icon"></i>
-                <h2>Source Material</h2>
+                <h2>Source Material & AI Magic</h2>
               </div>
               <span class="badge">Text, PDFs & Images</span>
             </div>
@@ -136,9 +192,20 @@
             <div class="panel-body smart-input-container">
               <div class="smart-input-box" id="dropZone">
                 <textarea
+                  id="magicPrompt"
+                  class="custom-scrollbar"
+                  placeholder="✨ Magic Box (Optional): Tell AI exactly how you want the test... (e.g., 'Make it highly conceptual', 'Focus on numericals', 'Include Urdu translation')"
+                  style="
+                    border-bottom: 2px dashed var(--border-light);
+                    padding-bottom: 10px;
+                    background: #fffcf0;
+                  "
+                ></textarea>
+
+                <textarea
                   id="bookText"
                   class="custom-scrollbar"
-                  placeholder="Type or paste your text here...&#10;Or drag and drop PDFs / Images directly into this area."
+                  placeholder="Type or paste syllabus text here...&#10;Or drag and drop PDFs / Images directly."
                 ></textarea>
 
                 <div

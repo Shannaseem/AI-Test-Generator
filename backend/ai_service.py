@@ -26,7 +26,8 @@ def configure_active_key():
 
 configure_active_key()
 
-def extract_test_data(text, files_data=[]):
+# 🚀 NAYA PARAMETERS ADD KIYE GAYE HAIN
+def extract_test_data(text, files_data=[], short_t="8", short_a="5", long_t="3", long_a="2", long_parts="no", magic_prompt=""):
     global current_key_index
     
     master_data = {
@@ -35,24 +36,31 @@ def extract_test_data(text, files_data=[]):
         "long_qs": []
     }
     
-    # AI ke liye strict instruction
-    prompt_instruction = """
-    You are an expert Educational Data Extractor AI. 
-    Analyze the attached material thoroughly and extract EVERY SINGLE QUESTION you can find.
-    If the text contains MCQs, extract them. If it contains short or long questions, extract them.
+    parts_rule = "Divide each long question into 'Part (a)' and 'Part (b)'." if long_parts == "yes" else "Do NOT divide long questions into parts. Keep them as single full questions."
+    user_magic = f"User's Special Instructions: {magic_prompt}" if magic_prompt else "No special instructions. Just make a standard high-quality exam."
     
-    Return ONLY a valid JSON object with this exact structure (NO extra markdown or text outside JSON):
-    {
+    # 🚀 ADVANCED PROMPT ENGINEERING
+    prompt_instruction = f"""
+    You are an expert Educational Data Extractor AI. 
+    Analyze the attached material thoroughly and generate an exam paper based on these STRICT rules:
+    
+    1. Short Questions: Extract exactly {short_t} short questions. 
+    2. Long Questions: Extract exactly {long_t} long questions. {parts_rule}
+    3. {user_magic}
+    
+    Return ONLY a valid JSON object with this exact structure (NO extra text, NO markdown formatting outside JSON):
+    {{
         "mcqs": [
-            {"question": "...", "a": "...", "b": "...", "c": "...", "d": "...", "answer": "..."}
+            {{"question": "...", "a": "...", "b": "...", "c": "...", "d": "...", "answer": "..."}}
         ],
         "short_qs": [
-            {"text": "..."}
+            {{"text": "..."}}
         ],
         "long_qs": [
-            {"text": "..."}
+            {{"text": "..."}}
         ]
-    }
+    }}
+    Note: If a long question has parts, format it cleanly like "a) [text] \\nb) [text]" inside the "text" string field.
     """
     
     model = genai.GenerativeModel(
@@ -66,9 +74,7 @@ def extract_test_data(text, files_data=[]):
         
         for attempt in range(max_attempts):
             try:
-                print(f"⚡ Processing AI for [{item_name}] with Key {current_key_index + 1}...")
                 response = model.generate_content(content_list)
-                
                 raw_text = response.text.strip()
                 if raw_text.startswith("```json"):
                     raw_text = raw_text.replace("```json", "").replace("```", "").strip()
@@ -80,7 +86,6 @@ def extract_test_data(text, files_data=[]):
             except Exception as e:
                 error_msg = str(e)
                 if "429" in error_msg or "Quota" in error_msg or "ResourceExhausted" in error_msg:
-                    print(f"⚠️ Key {current_key_index + 1} Limit Full during {item_name}!")
                     if attempt < max_attempts - 1:
                         current_key_index = (current_key_index + 1) % len(API_KEYS)
                         configure_active_key()
@@ -88,43 +93,30 @@ def extract_test_data(text, files_data=[]):
                     else:
                         raise Exception("RATE_LIMIT_WAIT:45")
                 else:
-                    print(f"⚠️ JSON Parse Error on {item_name}: {error_msg}. Skipping this file to save the rest.")
                     return {"mcqs": [], "short_qs": [], "long_qs": []}
                     
         return {"mcqs": [], "short_qs": [], "long_qs": []}
 
-    # 1. Pehle Text Box ka Data process karein
     if text and text.strip():
         data = process_item_with_ai([prompt_instruction, f"TEXT TO ANALYZE:\n{text}"], "Text Box Content")
         master_data["mcqs"].extend(data.get("mcqs", []))
         master_data["short_qs"].extend(data.get("short_qs", []))
         master_data["long_qs"].extend(data.get("long_qs", []))
         
-    # 2. Phir Har File ko Alag se Process karein
     if files_data:
         for idx, f in enumerate(files_data):
             file_name_label = f.get("filename", f"File {idx + 1}")
-            
-            # 🚀 MASTER FIX FOR WORD FILE: Text ko proper wrapper ke andar bhej rahe hain
             if f["mime_type"] == "text/plain":
                 file_text = f["data"].decode('utf-8')
-                
-                if len(file_text.strip()) < 5:
-                    print(f"⚠️ Skipped AI call for {file_name_label} because text was empty.")
-                    continue
-                    
-                payload = f"--- START OF DOCUMENT TEXT ({file_name_label}) ---\n{file_text}\n--- END OF DOCUMENT TEXT ---\n\nTASK: Please extract all MCQs, short questions, and long questions from the text above."
+                if len(file_text.strip()) < 5: continue
+                payload = f"--- DOCUMENT TEXT ---\n{file_text}\n--- END ---"
                 data = process_item_with_ai([prompt_instruction, payload], file_name_label)
-            
-            # Agar PDF ya Image hai
             else:
                 payload = {"mime_type": f["mime_type"], "data": f["data"]}
                 data = process_item_with_ai([prompt_instruction, payload], file_name_label)
             
-            # Extracted data ko master list mein jor do
             master_data["mcqs"].extend(data.get("mcqs", []))
             master_data["short_qs"].extend(data.get("short_qs", []))
             master_data["long_qs"].extend(data.get("long_qs", []))
 
-    print(f"🎯 FINAL OUTPUT READY: {len(master_data['mcqs'])} MCQs, {len(master_data['short_qs'])} Shorts, {len(master_data['long_qs'])} Longs.")
     return master_data
