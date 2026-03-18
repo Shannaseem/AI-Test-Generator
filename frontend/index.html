@@ -94,6 +94,33 @@
                   <label>Syllabus / Chapter <span class="req">*</span></label>
                 </div>
 
+                <div class="input-group full">
+                  <div class="select-wrapper">
+                    <select id="bilingual" required>
+                      <option value="no">English Only</option>
+                      <option value="yes">Bilingual (English + Urdu) 🇵🇰</option>
+                    </select>
+                    <label class="active-label"
+                      >Language Format <span class="req">*</span></label
+                    >
+                    <i class="fa-solid fa-chevron-down select-icon"></i>
+                  </div>
+                </div>
+
+                <div class="input-group full">
+                  <input
+                    type="number"
+                    id="shortGroups"
+                    min="1"
+                    required
+                    placeholder=" "
+                    value="2"
+                  />
+                  <label
+                    >Number of Short Q Groups (e.g. Q2, Q3)
+                    <span class="req">*</span></label
+                  >
+                </div>
                 <div class="input-group">
                   <input
                     type="number"
@@ -103,7 +130,7 @@
                     placeholder=" "
                     value="8"
                   />
-                  <label>Total Short Qs <span class="req">*</span></label>
+                  <label>Total Qs per Group <span class="req">*</span></label>
                 </div>
                 <div class="input-group">
                   <input
@@ -114,7 +141,7 @@
                     placeholder=" "
                     value="5"
                   />
-                  <label>Attempt Short Qs <span class="req">*</span></label>
+                  <label>Attempt per Group <span class="req">*</span></label>
                 </div>
 
                 <div class="input-group">
@@ -194,7 +221,7 @@
                 <textarea
                   id="magicPrompt"
                   class="custom-scrollbar"
-                  placeholder="✨ Magic Box (Optional): Tell AI exactly how you want the test... (e.g., 'Make it highly conceptual', 'Focus on numericals', 'Include Urdu translation')"
+                  placeholder="✨ Magic Box (Optional): Tell AI exactly how you want the test..."
                   style="
                     border-bottom: 2px dashed var(--border-light);
                     padding-bottom: 10px;
@@ -205,7 +232,7 @@
                 <textarea
                   id="bookText"
                   class="custom-scrollbar"
-                  placeholder="Type or paste syllabus text here...&#10;Or drag and drop PDFs / Images directly."
+                  placeholder="Type or paste syllabus text here...&#10;Or drag and drop PDFs / press Ctrl+V to paste Images directly."
                 ></textarea>
 
                 <div
@@ -221,7 +248,9 @@
                   >
                     <i class="fa-solid fa-paperclip"></i> Add Files
                   </button>
-                  <span class="limit-info">Max 10 files (PDFs/Images)</span>
+                  <span class="limit-info"
+                    >Max 10 files (Ctrl+V Supported)</span
+                  >
                   <input
                     type="file"
                     id="fileInput"

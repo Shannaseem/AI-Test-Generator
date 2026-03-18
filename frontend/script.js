@@ -30,6 +30,38 @@ const dropZone = document.getElementById("dropZone");
 const fileInput = document.getElementById("fileInput");
 const previewContainer = document.getElementById("previewContainer");
 
+// ==========================================
+// 🚀 CLIPBOARD PASTE (Ctrl+V) MAGIC
+// ==========================================
+document.addEventListener("paste", (e) => {
+  const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+  let filesAdded = false;
+
+  for (let index in items) {
+    const item = items[index];
+    if (item.kind === "file" && item.type.startsWith("image/")) {
+      const blob = item.getAsFile();
+
+      if (selectedFiles.length >= 10) {
+        alert("Maximum 10 files allowed at once.");
+        break;
+      }
+
+      const file = new File([blob], `pasted_screenshot_${Date.now()}.png`, {
+        type: item.type,
+      });
+      selectedFiles.push(file);
+      filesAdded = true;
+    }
+  }
+
+  if (filesAdded) {
+    renderPreviews();
+    dropZone.classList.add("dragover");
+    setTimeout(() => dropZone.classList.remove("dragover"), 300);
+  }
+});
+
 dropZone.addEventListener("dragover", (e) => {
   e.preventDefault();
   dropZone.classList.add("dragover");
@@ -112,9 +144,6 @@ function renderPreviews() {
   });
 }
 
-// ==========================================
-// PROGRESS BAR & GENERATION LOGIC
-// ==========================================
 let countdownInterval = null;
 let simulatedProgress = null;
 
@@ -163,7 +192,6 @@ function completeProgressBar() {
       pFill.classList.remove("success-bar");
       pFill.style.width = "0%";
 
-      // Auto clear material
       document.getElementById("bookText").value = "";
       document.getElementById("syllabus").value = "";
       selectedFiles = [];
@@ -238,21 +266,18 @@ async function processTestGeneration(formData, isAutoRetry = false) {
 
     const blob = await response.blob();
 
-    // 🚀 THE FIX: Backend ki bajaye seedha Frontend se clean filename generate karna!
     const classVal = document.getElementById("className").value.trim();
     const subjectVal = document.getElementById("subject").value.trim();
     const syllabusVal = document.getElementById("syllabus").value.trim();
 
-    // Windows me file name me yeh characters nahi ho sakte, is liye inko hata rahe hain
     const cleanStr = (str) => str.replace(/[\\/:*?"<>|]/g, "-");
 
-    // Perfect format: "ICS part I computer chapter no 3.docx"
     const filename = `${cleanStr(classVal)} ${cleanStr(subjectVal)} ${cleanStr(syllabusVal)}.docx`;
 
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = filename; // Yahan fresh clean naam apply hoga
+    a.download = filename;
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -279,10 +304,6 @@ async function processTestGeneration(formData, isAutoRetry = false) {
 // ==========================================
 // FORM SUBMIT LISTENER
 // ==========================================
-
-// ==========================================
-// FORM SUBMIT LISTENER
-// ==========================================
 document.getElementById("testForm").addEventListener("submit", function (e) {
   e.preventDefault();
 
@@ -299,7 +320,6 @@ document.getElementById("testForm").addEventListener("submit", function (e) {
   }
 
   const formData = new FormData();
-  // Purana Data
   formData.append("academy_name", document.getElementById("academyName").value);
   formData.append("subject", document.getElementById("subject").value);
   formData.append("class_name", document.getElementById("className").value);
@@ -309,14 +329,10 @@ document.getElementById("testForm").addEventListener("submit", function (e) {
     document.getElementById("timeAllowed").value + " min",
   );
   formData.append("syllabus", document.getElementById("syllabus").value);
-  formData.append("long_q_marks", document.getElementById("longMarks").value);
-  formData.append(
-    "template_style",
-    document.getElementById("templateStyle").value,
-  );
-  formData.append("text", textVal);
 
-  // 🚀 NAYA DATA: Short, Long aur Magic Box
+  // 🚀 NAYE FIELDS ATTACH KIYE GAYE HAIN
+  formData.append("bilingual", document.getElementById("bilingual").value);
+  formData.append("short_groups", document.getElementById("shortGroups").value);
   formData.append("short_total", document.getElementById("shortTotal").value);
   formData.append(
     "short_attempt",
@@ -325,10 +341,16 @@ document.getElementById("testForm").addEventListener("submit", function (e) {
   formData.append("long_total", document.getElementById("longTotal").value);
   formData.append("long_attempt", document.getElementById("longAttempt").value);
   formData.append("long_parts", document.getElementById("longParts").value);
+  formData.append("long_q_marks", document.getElementById("longMarks").value);
+  formData.append(
+    "template_style",
+    document.getElementById("templateStyle").value,
+  );
   formData.append(
     "magic_prompt",
     document.getElementById("magicPrompt").value.trim(),
   );
+  formData.append("text", textVal);
 
   selectedFiles.forEach((file) => {
     formData.append("files", file);
