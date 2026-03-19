@@ -10,8 +10,10 @@ from docx.enum.section import WD_SECTION_START
 from docx.oxml.shared import OxmlElement, qn
 from lxml import etree
 
+
 def clean_text(text):
     return re.sub(r'^\d+[\.\)]\s*', '', str(text)).strip()
+
 
 def set_rtl_paragraph(paragraph):
     pPr = paragraph._p.get_or_add_pPr()
@@ -19,6 +21,7 @@ def set_rtl_paragraph(paragraph):
     bidi.set(qn('w:val'), '1')
     pPr.append(bidi)
     paragraph.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+
 
 def add_urdu_run(paragraph, text, font_size=12, bold=False):
     run = paragraph.add_run(text)
@@ -35,26 +38,16 @@ def add_urdu_run(paragraph, text, font_size=12, bold=False):
     rFonts.set(qn('w:cs'), 'Jameel Noori Nastaleeq')
     return run
 
+
 def split_bilingual(text):
     if '||' in str(text):
         parts = str(text).split('||', 1)
         return parts[0].strip(), parts[1].strip()
     return str(text).strip(), None
 
-# ==========================================
-# ✅ SIDE-BY-SIDE BILINGUAL TABLE ROW
-# English LEFT | Urdu RIGHT (jaise image mein)
-# ==========================================
-def add_side_by_side_bilingual(doc, eng_text, urdu_text, num_prefix="", font_size=12, space_after=4):
-    """
-    Ek 2-column table row banata hai:
-    | English text (LTR) | Urdu text (RTL) |
-    """
-    tbl = doc.add_table(rows=1, cols=2)
-    tbl.style = 'Table Grid'
 
-    # Table border hatao (invisible table)
-    tbl_pr = tbl._tbl.get_or_add_tblPr()
+def remove_table_borders(table):
+    tbl_pr = table._tbl.get_or_add_tblPr()
     tbl_borders = OxmlElement('w:tblBorders')
     for border_name in ['top', 'left', 'bottom', 'right', 'insideH', 'insideV']:
         border = OxmlElement(f'w:{border_name}')
@@ -65,15 +58,16 @@ def add_side_by_side_bilingual(doc, eng_text, urdu_text, num_prefix="", font_siz
         tbl_borders.append(border)
     tbl_pr.append(tbl_borders)
 
-    # Column widths: 50% each
-    tbl.columns[0].width = Inches(3.7)
-    tbl.columns[1].width = Inches(3.7)
+
+def add_side_by_side_bilingual(doc, eng_text, urdu_text, num_prefix="", font_size=12, space_after=4):
+    tbl = doc.add_table(rows=1, cols=2, width=Inches(7.67))
+    tbl.style = 'Table Grid'
+    remove_table_borders(tbl)
 
     row = tbl.rows[0]
     row.cells[0].width = Inches(3.7)
     row.cells[1].width = Inches(3.7)
 
-    # --- English cell (LEFT) ---
     eng_cell = row.cells[0]
     eng_cell.vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.CENTER
     p_eng = eng_cell.paragraphs[0]
@@ -88,20 +82,16 @@ def add_side_by_side_bilingual(doc, eng_text, urdu_text, num_prefix="", font_siz
     r_eng = p_eng.add_run(eng_text)
     r_eng.font.size = Pt(font_size)
 
-    # --- Urdu cell (RIGHT) ---
     urdu_cell = row.cells[1]
     urdu_cell.vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.CENTER
     p_urdu = urdu_cell.paragraphs[0]
     p_urdu.paragraph_format.space_after = Pt(space_after)
     set_rtl_paragraph(p_urdu)
-    add_urdu_run(p_urdu, urdu_text, font_size=font_size + 2, bold=False)
+    add_urdu_run(p_urdu, urdu_text, font_size=font_size + 2)
 
     return tbl
 
 
-# ==========================================
-# ✅ WATERMARK
-# ==========================================
 def add_watermark(doc, watermark_text):
     for section in doc.sections:
         header = section.header
@@ -110,8 +100,7 @@ def add_watermark(doc, watermark_text):
         para = header.paragraphs[0]
         r = para.add_run()
         r_elem = r._r
-        drawing_xml = f'''
-        <w:pict xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+        drawing_xml = f'''<w:pict xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"
                 xmlns:v="urn:schemas-microsoft-com:vml"
                 xmlns:o="urn:schemas-microsoft-com:office:office">
           <v:shape type="#_x0000_t136"
@@ -128,23 +117,18 @@ def add_watermark(doc, watermark_text):
               string="{watermark_text}"/>
             <o:lock v:ext="edit" rotation="t"/>
           </v:shape>
-        </w:pict>
-        '''
+        </w:pict>'''
         pict_elem = etree.fromstring(drawing_xml)
         r_elem.append(pict_elem)
 
 
-# ==========================================
-# ✅ ANSWER KEY PAGE
-# ==========================================
 def add_answer_key_page(doc, mcqs, short_qs, long_qs, bilingual="no"):
-    is_bilingual = (bilingual == "yes")
     doc.add_page_break()
 
     ak_heading = doc.add_paragraph()
     ak_heading.alignment = WD_ALIGN_PARAGRAPH.CENTER
     ak_heading.paragraph_format.space_after = Pt(16)
-    r_ak = ak_heading.add_run("✦ ANSWER KEY ✦")
+    r_ak = ak_heading.add_run("ANSWER KEY")
     r_ak.bold = True
     r_ak.font.size = Pt(20)
     r_ak.font.color.rgb = RGBColor(0x30, 0x50, 0x60)
@@ -153,18 +137,18 @@ def add_answer_key_page(doc, mcqs, short_qs, long_qs, bilingual="no"):
     div_para.paragraph_format.space_after = Pt(12)
     pPr = div_para._p.get_or_add_pPr()
     pBdr = OxmlElement('w:pBdr')
-    bottom = OxmlElement('w:bottom')
-    bottom.set(qn('w:val'), 'single')
-    bottom.set(qn('w:sz'), '12')
-    bottom.set(qn('w:space'), '1')
-    bottom.set(qn('w:color'), '305060')
-    pBdr.append(bottom)
+    bot = OxmlElement('w:bottom')
+    bot.set(qn('w:val'), 'single')
+    bot.set(qn('w:sz'), '12')
+    bot.set(qn('w:space'), '1')
+    bot.set(qn('w:color'), '305060')
+    pBdr.append(bot)
     pPr.append(pBdr)
 
     if mcqs:
-        mcq_ak_head = doc.add_paragraph()
-        mcq_ak_head.paragraph_format.space_after = Pt(8)
-        r_mh = mcq_ak_head.add_run("MCQ Answers:")
+        mcq_head = doc.add_paragraph()
+        mcq_head.paragraph_format.space_after = Pt(8)
+        r_mh = mcq_head.add_run("MCQ Answers:")
         r_mh.bold = True
         r_mh.font.size = Pt(14)
         r_mh.font.color.rgb = RGBColor(0x25, 0x63, 0xEB)
@@ -202,25 +186,23 @@ def add_answer_key_page(doc, mcqs, short_qs, long_qs, bilingual="no"):
             cell_ans = ak_table.rows[row_idx].cells[col_idx + 1]
             cell_ans.width = Inches(1.0)
             cell_ans.paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.CENTER
-            answer_letter = str(m.get('answer', '')).strip().upper()
-            if not answer_letter:
-                answer_letter = "A"
+            answer_letter = str(m.get('answer', '')).strip().upper() or "A"
             r_a = cell_ans.paragraphs[0].add_run(answer_letter)
             r_a.bold = True
             r_a.font.size = Pt(12)
             r_a.font.color.rgb = RGBColor(0x16, 0xA3, 0x4A)
 
     if short_qs:
-        sq_ak_head = doc.add_paragraph()
-        sq_ak_head.paragraph_format.space_before = Pt(14)
-        sq_ak_head.paragraph_format.space_after = Pt(8)
-        r_sh = sq_ak_head.add_run("Short Questions — Key Points:")
+        sq_head = doc.add_paragraph()
+        sq_head.paragraph_format.space_before = Pt(14)
+        sq_head.paragraph_format.space_after = Pt(8)
+        r_sh = sq_head.add_run("Short Questions - Key Points:")
         r_sh.bold = True
         r_sh.font.size = Pt(14)
         r_sh.font.color.rgb = RGBColor(0x25, 0x63, 0xEB)
 
         for idx, sq in enumerate(short_qs, start=1):
-            sq_eng, sq_urdu = split_bilingual(sq.get('text', ''))
+            sq_eng, _ = split_bilingual(sq.get('text', ''))
             p_sq = doc.add_paragraph()
             p_sq.paragraph_format.left_indent = Inches(0.25)
             p_sq.paragraph_format.first_line_indent = Inches(-0.25)
@@ -239,16 +221,16 @@ def add_answer_key_page(doc, mcqs, short_qs, long_qs, bilingual="no"):
             r_hint.font.italic = True
 
     if long_qs:
-        lq_ak_head = doc.add_paragraph()
-        lq_ak_head.paragraph_format.space_before = Pt(14)
-        lq_ak_head.paragraph_format.space_after = Pt(8)
-        r_lh = lq_ak_head.add_run("Long Questions — Key Points:")
+        lq_head = doc.add_paragraph()
+        lq_head.paragraph_format.space_before = Pt(14)
+        lq_head.paragraph_format.space_after = Pt(8)
+        r_lh = lq_head.add_run("Long Questions - Key Points:")
         r_lh.bold = True
         r_lh.font.size = Pt(14)
         r_lh.font.color.rgb = RGBColor(0x25, 0x63, 0xEB)
 
         for idx, lq in enumerate(long_qs, start=1):
-            lq_eng, lq_urdu = split_bilingual(lq.get('text', ''))
+            lq_eng, _ = split_bilingual(lq.get('text', ''))
             p_lq = doc.add_paragraph()
             p_lq.paragraph_format.left_indent = Inches(0.25)
             p_lq.paragraph_format.first_line_indent = Inches(-0.25)
@@ -307,7 +289,7 @@ def generate_word_file(academy_name, subject, class_name, test_date, time_allowe
     short_qs = ai_data.get("short_qs", [])
     long_qs = ai_data.get("long_qs", [])
 
-    # --- MARKS ---
+    # --- MARKS CALCULATION ---
     mcq_marks = len(mcqs) * 1
     try:
         short_attempt_int = int(short_attempt)
@@ -334,48 +316,41 @@ def generate_word_file(academy_name, subject, class_name, test_date, time_allowe
         formatted_date = test_date
 
     # ==========================================
-    # ✅ HEADER — Logo LEFT + Academy Name
+    # HEADER — Logo LEFT + Academy Name
     # ==========================================
     header = section.header
 
-    # Header mein ek 2-column table banao
-    # [LOGO] | [ACADEMY NAME centered]
-    hdr_table = header.add_table(rows=1, cols=2, width=Inches(7.67))
-    hdr_table.style = 'Table Grid'
+    # Default paragraphs clear karo
+    for para in header.paragraphs:
+        try:
+            p = para._p
+            p.getparent().remove(p)
+        except:
+            pass
 
-    # Table borders hatao
-    hdr_tbl_pr = hdr_table._tbl.get_or_add_tblPr()
-    hdr_borders = OxmlElement('w:tblBorders')
-    for border_name in ['top', 'left', 'bottom', 'right', 'insideH', 'insideV']:
-        border = OxmlElement(f'w:{border_name}')
-        border.set(qn('w:val'), 'none')
-        border.set(qn('w:sz'), '0')
-        border.set(qn('w:space'), '0')
-        border.set(qn('w:color'), 'auto')
-        hdr_borders.append(border)
-    hdr_tbl_pr.append(hdr_borders)
+    # Header table: [LOGO | ACADEMY NAME]
+    hdr_table = header.add_table(rows=1, cols=2, width=Inches(7.67))
+    remove_table_borders(hdr_table)
 
     logo_cell = hdr_table.rows[0].cells[0]
     name_cell = hdr_table.rows[0].cells[1]
-
     logo_cell.width = Inches(1.0)
     name_cell.width = Inches(6.67)
 
-    # Logo cell
+    # Logo
     if logo_bytes:
-        logo_stream = io.BytesIO(logo_bytes)
-        logo_para = logo_cell.paragraphs[0]
-        logo_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        logo_run = logo_para.add_run()
         try:
+            logo_stream = io.BytesIO(logo_bytes)
+            logo_para = logo_cell.paragraphs[0]
+            logo_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            logo_run = logo_para.add_run()
             logo_run.add_picture(logo_stream, width=Inches(0.8), height=Inches(0.8))
         except Exception as e:
             print(f"Logo error: {e}")
-            logo_para.add_run("🏫")
     else:
         logo_cell.paragraphs[0].add_run("")
 
-    # Academy name cell
+    # Academy Name
     name_para = name_cell.paragraphs[0]
     name_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
     name_para.paragraph_format.space_after = Pt(0)
@@ -384,7 +359,7 @@ def generate_word_file(academy_name, subject, class_name, test_date, time_allowe
     run_title.font.size = Pt(28)
     run_title.font.bold = True
 
-    # Subject | Class | Syllabus line
+    # Subject | Class | Syllabus
     p_sub = header.add_paragraph()
     p_sub.paragraph_format.space_after = Pt(4)
     tabs = p_sub.paragraph_format.tab_stops
@@ -398,19 +373,13 @@ def generate_word_file(academy_name, subject, class_name, test_date, time_allowe
     # Bottom border
     pPr = p_sub._p.get_or_add_pPr()
     pBdr = OxmlElement('w:pBdr')
-    bottom = OxmlElement('w:bottom')
-    bottom.set(qn('w:val'), 'single')
-    bottom.set(qn('w:sz'), '18')
-    bottom.set(qn('w:space'), '1')
-    bottom.set(qn('w:color'), '305060')
-    pBdr.append(bottom)
+    bot = OxmlElement('w:bottom')
+    bot.set(qn('w:val'), 'single')
+    bot.set(qn('w:sz'), '18')
+    bot.set(qn('w:space'), '1')
+    bot.set(qn('w:color'), '305060')
+    pBdr.append(bot)
     pPr.append(pBdr)
-
-    # Remove default first paragraph of header
-    first_para = header.paragraphs[0]
-    if not first_para.text and first_para != p_sub:
-        fp = first_para._p
-        fp.getparent().remove(fp)
 
     # --- INFO ROW ---
     p_info = doc.add_paragraph()
@@ -461,18 +430,20 @@ def generate_word_file(academy_name, subject, class_name, test_date, time_allowe
             p_q.paragraph_format.left_indent = Inches(0.2)
             p_q.paragraph_format.first_line_indent = Inches(-0.2)
             p_q.paragraph_format.space_after = Pt(0)
-            r_idx = p_q.add_run(f"{idx}. ")
-            r_idx.bold = True
+            p_q.add_run(f"{idx}. ").bold = True
             p_q.add_run(clean_text(q_eng)).bold = True
 
             if is_bilingual and q_urdu:
-                p_urdu_q = doc.add_paragraph()
-                p_urdu_q.paragraph_format.left_indent = Inches(0.2)
-                p_urdu_q.paragraph_format.space_after = Pt(0)
-                set_rtl_paragraph(p_urdu_q)
-                add_urdu_run(p_urdu_q, clean_text(q_urdu), font_size=13, bold=True)
+                p_uq = doc.add_paragraph()
+                p_uq.paragraph_format.left_indent = Inches(0.2)
+                p_uq.paragraph_format.space_after = Pt(0)
+                set_rtl_paragraph(p_uq)
+                add_urdu_run(p_uq, clean_text(q_urdu), font_size=13, bold=True)
 
-            opts = {'A': m.get('a',''), 'B': m.get('b',''), 'C': m.get('c',''), 'D': m.get('d','')}
+            opts = {
+                'A': m.get('a', ''), 'B': m.get('b', ''),
+                'C': m.get('c', ''), 'D': m.get('d', '')
+            }
             for key, val in opts.items():
                 opt_eng, opt_urdu = split_bilingual(val)
                 p_opt = doc.add_paragraph()
@@ -481,11 +452,11 @@ def generate_word_file(academy_name, subject, class_name, test_date, time_allowe
                 p_opt.add_run(f"{key}) ").bold = True
                 p_opt.add_run(clean_text(opt_eng))
                 if is_bilingual and opt_urdu:
-                    p_opt_urdu = doc.add_paragraph()
-                    p_opt_urdu.paragraph_format.left_indent = Inches(0.4)
-                    p_opt_urdu.paragraph_format.space_after = Pt(0)
-                    set_rtl_paragraph(p_opt_urdu)
-                    add_urdu_run(p_opt_urdu, clean_text(opt_urdu), font_size=12)
+                    p_ou = doc.add_paragraph()
+                    p_ou.paragraph_format.left_indent = Inches(0.4)
+                    p_ou.paragraph_format.space_after = Pt(0)
+                    set_rtl_paragraph(p_ou)
+                    add_urdu_run(p_ou, clean_text(opt_urdu), font_size=12)
 
             doc.paragraphs[-1].paragraph_format.space_after = Pt(2)
 
@@ -495,7 +466,6 @@ def generate_word_file(academy_name, subject, class_name, test_date, time_allowe
         cols3.set(qn('w:num'), '1')
 
     else:
-        # ✅ TABLE FORMAT — Bilingual rows in table cells
         p_mcq_head = doc.add_paragraph()
         p_mcq_head.paragraph_format.space_after = Pt(6)
         run_l = p_mcq_head.add_run(f'Multiple Choice Questions ({mcq_marks} Marks)')
@@ -507,15 +477,14 @@ def generate_word_file(academy_name, subject, class_name, test_date, time_allowe
         table.alignment = WD_TABLE_ALIGNMENT.CENTER
         widths = [Inches(0.4), Inches(3.87), Inches(0.85), Inches(0.85), Inches(0.85), Inches(0.85)]
         for row in table.rows:
-            for idx, width in enumerate(widths):
-                row.cells[idx].width = width
+            for i, w in enumerate(widths):
+                row.cells[i].width = w
 
         headers = ['No', 'Question', 'A', 'B', 'C', 'D']
-        hdr_cells = table.rows[0].cells
-        for i, text_h in enumerate(headers):
-            p = hdr_cells[i].paragraphs[0]
+        for i, txt in enumerate(headers):
+            p = table.rows[0].cells[i].paragraphs[0]
             p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-            run = p.add_run(text_h)
+            run = p.add_run(txt)
             run.bold = True
             run.font.size = Pt(13)
 
@@ -527,8 +496,8 @@ def generate_word_file(academy_name, subject, class_name, test_date, time_allowe
             d_eng, d_urdu = split_bilingual(m.get('d', ''))
 
             row_cells = table.add_row().cells
-            for i, width in enumerate(widths):
-                row_cells[i].width = width
+            for i, w in enumerate(widths):
+                row_cells[i].width = w
                 row_cells[i].vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.CENTER
 
             row_cells[0].paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -543,13 +512,12 @@ def generate_word_file(academy_name, subject, class_name, test_date, time_allowe
                 set_rtl_paragraph(p_u)
                 add_urdu_run(p_u, clean_text(q_urdu), font_size=13)
 
-            option_pairs = [
+            for cell, eng, urdu in [
                 (row_cells[2], a_eng, a_urdu),
                 (row_cells[3], b_eng, b_urdu),
                 (row_cells[4], c_eng, c_urdu),
                 (row_cells[5], d_eng, d_urdu),
-            ]
-            for cell, eng, urdu in option_pairs:
+            ]:
                 cell.paragraphs[0].add_run(clean_text(eng))
                 if is_bilingual and urdu:
                     p_u = cell.add_paragraph()
@@ -557,7 +525,7 @@ def generate_word_file(academy_name, subject, class_name, test_date, time_allowe
                     add_urdu_run(p_u, clean_text(urdu), font_size=12)
 
     # ==========================================
-    # ✅ SHORT QUESTIONS — Side by Side Bilingual
+    # SHORT QUESTIONS
     # ==========================================
     try:
         short_total_int = int(short_total)
@@ -572,28 +540,22 @@ def generate_word_file(academy_name, subject, class_name, test_date, time_allowe
             break
 
         q_number = g + 2
-        short_heading = doc.add_paragraph()
-        short_heading.paragraph_format.space_before = Pt(8)
-        r_sq = short_heading.add_run(
+        sh = doc.add_paragraph()
+        sh.paragraph_format.space_before = Pt(8)
+        r_sq = sh.add_run(
             f'Q{q_number}. Short Questions (Attempt any {short_attempt} out of {short_total})'
         )
         r_sq.bold = True
         r_sq.font.size = Pt(14)
-        tabs_sq = short_heading.paragraph_format.tab_stops
-        tabs_sq.add_tab_stop(Inches(7.67), WD_TAB_ALIGNMENT.RIGHT)
-        short_heading.add_run(f'\t{short_marks_per_group} Marks').bold = True
+        sh.paragraph_format.tab_stops.add_tab_stop(Inches(7.67), WD_TAB_ALIGNMENT.RIGHT)
+        sh.add_run(f'\t{short_marks_per_group} Marks').bold = True
 
         for idx, sq in enumerate(group_qs, start=1):
             sq_eng, sq_urdu = split_bilingual(sq.get('text', ''))
             if is_bilingual and sq_urdu:
-                # ✅ Side by side table
                 add_side_by_side_bilingual(
-                    doc,
-                    eng_text=clean_text(sq_eng),
-                    urdu_text=clean_text(sq_urdu),
-                    num_prefix=f"{idx}. ",
-                    font_size=12,
-                    space_after=4
+                    doc, clean_text(sq_eng), clean_text(sq_urdu),
+                    num_prefix=f"{idx}. ", font_size=12, space_after=4
                 )
             else:
                 p = doc.add_paragraph()
@@ -604,18 +566,17 @@ def generate_word_file(academy_name, subject, class_name, test_date, time_allowe
                 p.add_run(clean_text(sq_eng))
 
     # ==========================================
-    # ✅ LONG QUESTIONS — Side by Side Bilingual
+    # LONG QUESTIONS
     # ==========================================
-    long_heading = doc.add_paragraph()
-    long_heading.paragraph_format.space_before = Pt(8)
-    r_lq = long_heading.add_run(
+    lh = doc.add_paragraph()
+    lh.paragraph_format.space_before = Pt(8)
+    r_lq = lh.add_run(
         f'Long Questions (Attempt any {long_attempt} out of {long_total})'
     )
     r_lq.bold = True
     r_lq.font.size = Pt(14)
-    tabs_lq = long_heading.paragraph_format.tab_stops
-    tabs_lq.add_tab_stop(Inches(7.67), WD_TAB_ALIGNMENT.RIGHT)
-    long_heading.add_run(f'\t{long_marks} Marks').bold = True
+    lh.paragraph_format.tab_stops.add_tab_stop(Inches(7.67), WD_TAB_ALIGNMENT.RIGHT)
+    lh.add_run(f'\t{long_marks} Marks').bold = True
 
     for idx, lq in enumerate(long_qs, start=1):
         lq_eng, lq_urdu = split_bilingual(lq.get('text', ''))
@@ -629,17 +590,11 @@ def generate_word_file(academy_name, subject, class_name, test_date, time_allowe
 
             if is_bilingual and lq_urdu:
                 urdu_parts = clean_text(lq_urdu).split('\\n')
-                urdu_part = urdu_parts[part_idx] if part_idx < len(urdu_parts) else ""
-                urdu_part = urdu_part.strip()
-
-                # ✅ Side by side
+                urdu_part = urdu_parts[part_idx].strip() if part_idx < len(urdu_parts) else ""
                 add_side_by_side_bilingual(
-                    doc,
-                    eng_text=part,
-                    urdu_text=urdu_part,
+                    doc, part, urdu_part,
                     num_prefix=f"{idx}. " if part_idx == 0 else "    ",
-                    font_size=12,
-                    space_after=4
+                    font_size=12, space_after=4
                 )
             else:
                 p = doc.add_paragraph()
@@ -653,11 +608,11 @@ def generate_word_file(academy_name, subject, class_name, test_date, time_allowe
                     p.paragraph_format.first_line_indent = Inches(0)
                 p.add_run(part)
 
-    # ✅ WATERMARK
+    # WATERMARK
     if add_watermark_flag == "yes":
         add_watermark(doc, academy_name.upper())
 
-    # ✅ ANSWER KEY
+    # ANSWER KEY
     if generate_answer_key == "yes":
         add_answer_key_page(doc, mcqs, short_qs, long_qs, bilingual)
 
