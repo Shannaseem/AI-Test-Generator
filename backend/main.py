@@ -22,14 +22,18 @@ app.add_middleware(
 
 # --- GLOBAL ERROR CATCHER ---
 # This stops FastAPI from dropping CORS headers when a 500 error happens
+# --- GLOBAL ERROR CATCHER ---
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     print("\n=== ❌ CRITICAL BACKEND ERROR ❌ ===")
-    traceback.print_exc()  # This prints the exact line of the crash to Render logs
+    traceback.print_exc()  # This prints the exact crash to Render logs
     print("====================================\n")
+    
+    # Manually injecting CORS headers into the error response so the frontend can see it
     return JSONResponse(
         status_code=500,
-        content={"detail": f"Server crashed: {str(exc)}"}
+        content={"detail": f"Server crashed: {str(exc)}"},
+        headers={"Access-Control-Allow-Origin": "*"} 
     )
 
 # ==========================================

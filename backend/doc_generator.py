@@ -47,8 +47,26 @@ def split_bilingual(text):
 
 
 def remove_table_borders(table):
-    tbl_pr = table._tbl.get_or_add_tblPr()
-    tbl_borders = OxmlElement('w:tblBorders')
+    tbl = table._tbl
+    
+    # Safely get or add w:tblPr (Table Properties) using XPath
+    tbl_pr_list = tbl.xpath('./w:tblPr')
+    if tbl_pr_list:
+        tbl_pr = tbl_pr_list[0]
+    else:
+        tbl_pr = OxmlElement('w:tblPr')
+        tbl.insert(0, tbl_pr)
+        
+    # Safely get or add w:tblBorders
+    tbl_borders_list = tbl_pr.xpath('./w:tblBorders')
+    if tbl_borders_list:
+        tbl_borders = tbl_borders_list[0]
+        tbl_borders.clear() # Clear existing borders
+    else:
+        tbl_borders = OxmlElement('w:tblBorders')
+        tbl_pr.append(tbl_borders)
+
+    # Apply 'none' to all border sides
     for border_name in ['top', 'left', 'bottom', 'right', 'insideH', 'insideV']:
         border = OxmlElement(f'w:{border_name}')
         border.set(qn('w:val'), 'none')
@@ -56,7 +74,6 @@ def remove_table_borders(table):
         border.set(qn('w:space'), '0')
         border.set(qn('w:color'), 'auto')
         tbl_borders.append(border)
-    tbl_pr.append(tbl_borders)
 
 
 def add_side_by_side_bilingual(doc, eng_text, urdu_text, num_prefix="", font_size=12, space_after=4):
