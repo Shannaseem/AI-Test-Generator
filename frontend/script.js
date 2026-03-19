@@ -3,36 +3,86 @@ document.getElementById("testDate").valueAsDate = new Date();
 const networkStatus = document.getElementById("networkStatus");
 const networkText = document.getElementById("networkText");
 const generateBtn = document.getElementById("generateBtn");
+const generatePdfBtn = document.getElementById("generatePdfBtn");
 
+// ==========================================
+// NETWORK STATUS
+// ==========================================
 function updateOnlineStatus() {
   if (navigator.onLine) {
     networkStatus.classList.remove("offline");
     networkText.innerText = "System Online";
     generateBtn.disabled = false;
+    generatePdfBtn.disabled = false;
     generateBtn.classList.remove("disabled-offline");
     generateBtn.innerHTML =
-      '<i class="fa-solid fa-wand-magic-sparkles"></i> <span>Generate AI Test</span>';
+      '<i class="fa-solid fa-wand-magic-sparkles"></i> <span>Generate Word (.docx)</span>';
+    generatePdfBtn.innerHTML =
+      '<i class="fa-solid fa-file-pdf"></i> <span>Export as PDF</span>';
   } else {
     networkStatus.classList.add("offline");
     networkText.innerText = "Offline - Check Internet";
     generateBtn.disabled = true;
+    generatePdfBtn.disabled = true;
     generateBtn.classList.add("disabled-offline");
     generateBtn.innerHTML =
-      '<i class="fa-solid fa-wifi"></i> <span>No Internet Connection</span>';
+      '<i class="fa-solid fa-wifi"></i> <span>No Internet</span>';
+    generatePdfBtn.innerHTML =
+      '<i class="fa-solid fa-wifi"></i> <span>No Internet</span>';
   }
 }
 window.addEventListener("online", updateOnlineStatus);
 window.addEventListener("offline", updateOnlineStatus);
 updateOnlineStatus();
 
+// ==========================================
+// ✅ LOGO UPLOAD LOGIC
+// ==========================================
+let selectedLogoFile = null;
+
+document.getElementById("logoInput").addEventListener("change", function (e) {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  selectedLogoFile = file;
+
+  const reader = new FileReader();
+  reader.onload = function (ev) {
+    const preview = document.getElementById("logoPreview");
+    const placeholder = document.getElementById("logoPlaceholder");
+    const removeBtn = document.getElementById("removeLogoBtn");
+
+    preview.src = ev.target.result;
+    preview.classList.remove("hidden");
+    placeholder.classList.add("hidden");
+    removeBtn.classList.remove("hidden");
+  };
+  reader.readAsDataURL(file);
+});
+
+function removeLogo(e) {
+  e.stopPropagation();
+  selectedLogoFile = null;
+
+  const preview = document.getElementById("logoPreview");
+  const placeholder = document.getElementById("logoPlaceholder");
+  const removeBtn = document.getElementById("removeLogoBtn");
+
+  preview.src = "";
+  preview.classList.add("hidden");
+  placeholder.classList.remove("hidden");
+  removeBtn.classList.add("hidden");
+  document.getElementById("logoInput").value = "";
+}
+
+// ==========================================
+// FILE DRAG & DROP + CLIPBOARD PASTE
+// ==========================================
 let selectedFiles = [];
 const dropZone = document.getElementById("dropZone");
 const fileInput = document.getElementById("fileInput");
 const previewContainer = document.getElementById("previewContainer");
 
-// ==========================================
-// 🚀 CLIPBOARD PASTE (Ctrl+V) MAGIC
-// ==========================================
 document.addEventListener("paste", (e) => {
   const items = (e.clipboardData || e.originalEvent.clipboardData).items;
   let filesAdded = false;
@@ -41,12 +91,10 @@ document.addEventListener("paste", (e) => {
     const item = items[index];
     if (item.kind === "file" && item.type.startsWith("image/")) {
       const blob = item.getAsFile();
-
       if (selectedFiles.length >= 10) {
         alert("Maximum 10 files allowed at once.");
         break;
       }
-
       const file = new File([blob], `pasted_screenshot_${Date.now()}.png`, {
         type: item.type,
       });
@@ -144,6 +192,9 @@ function renderPreviews() {
   });
 }
 
+// ==========================================
+// PROGRESS BAR
+// ==========================================
 let countdownInterval = null;
 let simulatedProgress = null;
 
@@ -167,7 +218,6 @@ function startProgressBar() {
       if (progress > 90) progress = 90;
       pFill.style.width = progress + "%";
       pText.innerText = progress + "%";
-
       if (progress > 40)
         pMsg.innerText = "Structuring MCQ and Short Questions...";
       if (progress > 70) pMsg.innerText = "Formatting Document Layout...";
@@ -175,7 +225,7 @@ function startProgressBar() {
   }, 800);
 }
 
-function completeProgressBar() {
+function completeProgressBar(isPdf = false) {
   clearInterval(simulatedProgress);
   const pFill = document.getElementById("progressBar");
   const pText = document.getElementById("progressPercent");
@@ -186,7 +236,9 @@ function completeProgressBar() {
   pText.innerText = "100%";
 
   setTimeout(() => {
-    pMsg.innerText = "Completed! Downloading...";
+    pMsg.innerText = isPdf
+      ? "PDF Ready! Downloading..."
+      : "Completed! Downloading...";
     setTimeout(() => {
       document.getElementById("progressContainer").classList.add("hidden");
       pFill.classList.remove("success-bar");
@@ -210,114 +262,11 @@ function errorProgressBar(msg) {
     `<span style='color:#dc2626;'>${msg}</span>`;
 }
 
-async function processTestGeneration(formData, isAutoRetry = false) {
-  const statusArea = document.getElementById("statusArea");
-
-  generateBtn.disabled = true;
-  generateBtn.innerHTML = isAutoRetry
-    ? '<i class="fa-solid fa-rotate-right fa-spin"></i> <span>Retrying Now...</span>'
-    : '<i class="fa-solid fa-spinner fa-spin"></i> <span>Generating...</span>';
-  statusArea.classList.add("hidden");
-
-  if (countdownInterval) clearInterval(countdownInterval);
-
-  if (!isAutoRetry) startProgressBar();
-  else {
-    document.getElementById("progressText").innerText =
-      "Restarting AI analysis...";
-    document.getElementById("progressBar").classList.remove("error-bar");
-  }
-
-  try {
-    const response = await fetch(
-      "https://ai-test-generator-2hsf.onrender.com/generate-test",
-      {
-        method: "POST",
-        body: formData,
-      },
-    );
-
-    if (!response.ok) {
-      const errText = await response.text();
-
-      if (errText.includes("RATE_LIMIT_WAIT")) {
-        let waitSeconds = 45;
-        const match = errText.match(/RATE_LIMIT_WAIT:(\d+)/);
-        if (match) waitSeconds = parseInt(match[1]);
-
-        errorProgressBar(`API Limit Hit. Waiting...`);
-
-        countdownInterval = setInterval(() => {
-          waitSeconds--;
-          document.getElementById("progressText").innerHTML =
-            `⚠️ API Limit. <b style='color:#dc2626;'>Auto-retrying in ${waitSeconds}s</b>`;
-          document.getElementById("progressPercent").innerText =
-            waitSeconds + "s";
-
-          if (waitSeconds <= 0) {
-            clearInterval(countdownInterval);
-            processTestGeneration(formData, true);
-          }
-        }, 1000);
-        return;
-      }
-      throw new Error(`Server Error: ${errText}`);
-    }
-
-    const blob = await response.blob();
-
-    const classVal = document.getElementById("className").value.trim();
-    const subjectVal = document.getElementById("subject").value.trim();
-    const syllabusVal = document.getElementById("syllabus").value.trim();
-
-    const cleanStr = (str) => str.replace(/[\\/:*?"<>|]/g, "-");
-
-    const filename = `${cleanStr(classVal)} ${cleanStr(subjectVal)} ${cleanStr(syllabusVal)}.docx`;
-
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    window.URL.revokeObjectURL(url);
-
-    completeProgressBar();
-    generateBtn.disabled = false;
-    generateBtn.innerHTML =
-      '<i class="fa-solid fa-wand-magic-sparkles"></i> <span>Generate Another Test</span>';
-  } catch (error) {
-    console.error("Error:", error);
-    errorProgressBar("Failed to generate test.");
-    statusArea.classList.remove("hidden");
-    statusArea.classList.add("error");
-    document.getElementById("statusMessage").innerText =
-      `❌ Error: ${error.message}`;
-
-    generateBtn.disabled = false;
-    generateBtn.innerHTML =
-      '<i class="fa-solid fa-wand-magic-sparkles"></i> <span>Generate AI Test Paper</span>';
-  }
-}
-
 // ==========================================
-// FORM SUBMIT LISTENER
+// ✅ BUILD FORM DATA (shared by both buttons)
 // ==========================================
-document.getElementById("testForm").addEventListener("submit", function (e) {
-  e.preventDefault();
-
-  if (!navigator.onLine) {
-    alert("Cannot generate test without an internet connection.");
-    return;
-  }
-
+function buildFormData(exportType = "docx") {
   const textVal = document.getElementById("bookText").value.trim();
-
-  if (!textVal && selectedFiles.length === 0) {
-    alert("⚠️ Please provide Source Material before generating!");
-    return;
-  }
 
   const formData = new FormData();
   formData.append("academy_name", document.getElementById("academyName").value);
@@ -329,8 +278,6 @@ document.getElementById("testForm").addEventListener("submit", function (e) {
     document.getElementById("timeAllowed").value + " min",
   );
   formData.append("syllabus", document.getElementById("syllabus").value);
-
-  // 🚀 NAYE FIELDS ATTACH KIYE GAYE HAIN
   formData.append("bilingual", document.getElementById("bilingual").value);
   formData.append("short_groups", document.getElementById("shortGroups").value);
   formData.append("short_total", document.getElementById("shortTotal").value);
@@ -352,9 +299,180 @@ document.getElementById("testForm").addEventListener("submit", function (e) {
   );
   formData.append("text", textVal);
 
+  // ✅ Answer Key & Watermark toggles
+  formData.append(
+    "generate_answer_key",
+    document.getElementById("generateAnswerKey").checked ? "yes" : "no",
+  );
+  formData.append(
+    "add_watermark",
+    document.getElementById("addWatermark").checked ? "yes" : "no",
+  );
+
+  // ✅ Logo file
+  if (selectedLogoFile) {
+    formData.append("logo", selectedLogoFile);
+  }
+
+  // ✅ Source files
   selectedFiles.forEach((file) => {
     formData.append("files", file);
   });
 
-  processTestGeneration(formData, false);
+  return formData;
+}
+
+// ==========================================
+// MAIN GENERATION FUNCTION
+// ==========================================
+const BASE_URL = "https://ai-test-generator-2hsf.onrender.com";
+
+async function processTestGeneration(
+  formData,
+  isAutoRetry = false,
+  isPdf = false,
+) {
+  const statusArea = document.getElementById("statusArea");
+  const endpoint = isPdf
+    ? `${BASE_URL}/generate-pdf`
+    : `${BASE_URL}/generate-test`;
+  const fileExt = isPdf ? "pdf" : "docx";
+  const mediType = isPdf
+    ? "application/pdf"
+    : "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+
+  // Disable both buttons
+  generateBtn.disabled = true;
+  generatePdfBtn.disabled = true;
+
+  if (isPdf) {
+    generatePdfBtn.innerHTML = isAutoRetry
+      ? '<i class="fa-solid fa-rotate-right fa-spin"></i> <span>Retrying...</span>'
+      : '<i class="fa-solid fa-spinner fa-spin"></i> <span>Generating PDF...</span>';
+  } else {
+    generateBtn.innerHTML = isAutoRetry
+      ? '<i class="fa-solid fa-rotate-right fa-spin"></i> <span>Retrying Now...</span>'
+      : '<i class="fa-solid fa-spinner fa-spin"></i> <span>Generating...</span>';
+  }
+
+  statusArea.classList.add("hidden");
+  if (countdownInterval) clearInterval(countdownInterval);
+  if (!isAutoRetry) startProgressBar();
+  else {
+    document.getElementById("progressText").innerText =
+      "Restarting AI analysis...";
+    document.getElementById("progressBar").classList.remove("error-bar");
+  }
+
+  try {
+    const response = await fetch(endpoint, { method: "POST", body: formData });
+
+    if (!response.ok) {
+      const errText = await response.text();
+
+      if (errText.includes("RATE_LIMIT_WAIT")) {
+        let waitSeconds = 45;
+        const match = errText.match(/RATE_LIMIT_WAIT:(\d+)/);
+        if (match) waitSeconds = parseInt(match[1]);
+
+        errorProgressBar(`API Limit Hit. Waiting...`);
+
+        countdownInterval = setInterval(() => {
+          waitSeconds--;
+          document.getElementById("progressText").innerHTML =
+            `⚠️ API Limit. <b style='color:#dc2626;'>Auto-retrying in ${waitSeconds}s</b>`;
+          document.getElementById("progressPercent").innerText =
+            waitSeconds + "s";
+
+          if (waitSeconds <= 0) {
+            clearInterval(countdownInterval);
+            processTestGeneration(formData, true, isPdf);
+          }
+        }, 1000);
+        return;
+      }
+      throw new Error(`Server Error: ${errText}`);
+    }
+
+    const blob = await response.blob();
+    const classVal = document.getElementById("className").value.trim();
+    const subjectVal = document.getElementById("subject").value.trim();
+    const syllabusVal = document.getElementById("syllabus").value.trim();
+    const cleanStr = (str) => str.replace(/[\\/:*?"<>|]/g, "-");
+    const filename = `${cleanStr(classVal)} ${cleanStr(subjectVal)} ${cleanStr(syllabusVal)}.${fileExt}`;
+
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(url);
+
+    completeProgressBar(isPdf);
+
+    generateBtn.disabled = false;
+    generatePdfBtn.disabled = false;
+    generateBtn.innerHTML =
+      '<i class="fa-solid fa-wand-magic-sparkles"></i> <span>Generate Another Test</span>';
+    generatePdfBtn.innerHTML =
+      '<i class="fa-solid fa-file-pdf"></i> <span>Export as PDF</span>';
+  } catch (error) {
+    console.error("Error:", error);
+    errorProgressBar("Failed to generate.");
+    statusArea.classList.remove("hidden");
+    statusArea.classList.add("error");
+    document.getElementById("statusMessage").innerText =
+      `❌ Error: ${error.message}`;
+
+    generateBtn.disabled = false;
+    generatePdfBtn.disabled = false;
+    generateBtn.innerHTML =
+      '<i class="fa-solid fa-wand-magic-sparkles"></i> <span>Generate AI Test Paper</span>';
+    generatePdfBtn.innerHTML =
+      '<i class="fa-solid fa-file-pdf"></i> <span>Export as PDF</span>';
+  }
+}
+
+// ==========================================
+// FORM SUBMIT — WORD BUTTON
+// ==========================================
+document.getElementById("testForm").addEventListener("submit", function (e) {
+  e.preventDefault();
+
+  if (!navigator.onLine) {
+    alert("Cannot generate test without an internet connection.");
+    return;
+  }
+
+  const textVal = document.getElementById("bookText").value.trim();
+  if (!textVal && selectedFiles.length === 0) {
+    alert("⚠️ Please provide Source Material before generating!");
+    return;
+  }
+
+  const formData = buildFormData("docx");
+  processTestGeneration(formData, false, false);
 });
+
+// ==========================================
+// ✅ PDF BUTTON CLICK
+// ==========================================
+document
+  .getElementById("generatePdfBtn")
+  .addEventListener("click", function () {
+    if (!navigator.onLine) {
+      alert("Cannot generate without an internet connection.");
+      return;
+    }
+
+    const textVal = document.getElementById("bookText").value.trim();
+    if (!textVal && selectedFiles.length === 0) {
+      alert("⚠️ Please provide Source Material before generating!");
+      return;
+    }
+
+    const formData = buildFormData("pdf");
+    processTestGeneration(formData, false, true);
+  });

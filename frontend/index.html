@@ -43,6 +43,7 @@
 
       <main class="main-content container">
         <form id="testForm" class="dashboard-grid">
+          <!-- ===== LEFT PANEL: SETTINGS ===== -->
           <aside class="panel settings-panel slide-up-1">
             <div class="panel-header">
               <div class="header-title">
@@ -52,6 +53,7 @@
             </div>
             <div class="panel-body custom-scrollbar">
               <div class="input-grid">
+                <!-- Academy Name -->
                 <div class="input-group full">
                   <input
                     type="text"
@@ -63,6 +65,40 @@
                     >Academy / School Name <span class="req">*</span></label
                   >
                 </div>
+
+                <!-- Logo Upload -->
+                <div class="input-group full logo-upload-group">
+                  <label class="logo-upload-label">
+                    <i class="fa-solid fa-image"></i> Academy Logo (Optional)
+                  </label>
+                  <div
+                    class="logo-upload-box"
+                    id="logoUploadBox"
+                    onclick="document.getElementById('logoInput').click()"
+                  >
+                    <div id="logoPlaceholder">
+                      <i class="fa-solid fa-cloud-arrow-up"></i>
+                      <span>Click to upload logo (PNG, JPG)</span>
+                    </div>
+                    <img id="logoPreview" class="hidden" alt="Logo Preview" />
+                    <button
+                      type="button"
+                      id="removeLogoBtn"
+                      class="remove-logo-btn hidden"
+                      onclick="removeLogo(event)"
+                    >
+                      <i class="fa-solid fa-times"></i> Remove
+                    </button>
+                  </div>
+                  <input
+                    type="file"
+                    id="logoInput"
+                    accept="image/png, image/jpeg, image/jpg, image/webp"
+                    class="hidden"
+                  />
+                </div>
+
+                <!-- Subject & Class -->
                 <div class="input-group">
                   <input type="text" id="subject" required placeholder=" " />
                   <label>Subject <span class="req">*</span></label>
@@ -71,6 +107,8 @@
                   <input type="text" id="className" required placeholder=" " />
                   <label>Class / Grade <span class="req">*</span></label>
                 </div>
+
+                <!-- Date & Time -->
                 <div class="input-group">
                   <input type="date" id="testDate" required />
                   <label class="active-label"
@@ -89,11 +127,14 @@
                   />
                   <label>Time Allowed (Min) <span class="req">*</span></label>
                 </div>
+
+                <!-- Syllabus -->
                 <div class="input-group full">
                   <input type="text" id="syllabus" required placeholder=" " />
                   <label>Syllabus / Chapter <span class="req">*</span></label>
                 </div>
 
+                <!-- Language -->
                 <div class="input-group full">
                   <div class="select-wrapper">
                     <select id="bilingual" required>
@@ -107,6 +148,7 @@
                   </div>
                 </div>
 
+                <!-- Short Q Groups -->
                 <div class="input-group full">
                   <input
                     type="number"
@@ -144,6 +186,7 @@
                   <label>Attempt per Group <span class="req">*</span></label>
                 </div>
 
+                <!-- Long Q -->
                 <div class="input-group">
                   <input
                     type="number"
@@ -167,6 +210,7 @@
                   <label>Attempt Long Qs <span class="req">*</span></label>
                 </div>
 
+                <!-- Long Q Format -->
                 <div class="input-group full">
                   <div class="select-wrapper">
                     <select id="longParts" required>
@@ -180,6 +224,7 @@
                   </div>
                 </div>
 
+                <!-- Marks & Style -->
                 <div class="input-group">
                   <input
                     type="text"
@@ -190,7 +235,6 @@
                   />
                   <label>Marks per Long Q <span class="req">*</span></label>
                 </div>
-
                 <div class="input-group">
                   <div class="select-wrapper">
                     <select id="templateStyle" required>
@@ -203,10 +247,41 @@
                     <i class="fa-solid fa-chevron-down select-icon"></i>
                   </div>
                 </div>
+
+                <!-- ✅ TOGGLE FEATURES -->
+                <div class="input-group full toggles-group">
+                  <label class="section-label">
+                    <i class="fa-solid fa-sliders"></i> Extra Features
+                  </label>
+
+                  <div class="toggle-row">
+                    <div class="toggle-item">
+                      <label class="toggle-switch">
+                        <input type="checkbox" id="generateAnswerKey" />
+                        <span class="toggle-slider"></span>
+                      </label>
+                      <span class="toggle-label">
+                        <i class="fa-solid fa-key"></i> Auto Answer Key
+                      </span>
+                    </div>
+
+                    <div class="toggle-item">
+                      <label class="toggle-switch">
+                        <input type="checkbox" id="addWatermark" />
+                        <span class="toggle-slider"></span>
+                      </label>
+                      <span class="toggle-label">
+                        <i class="fa-solid fa-shield-halved"></i> Anti-Copy
+                        Watermark
+                      </span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </aside>
 
+          <!-- ===== RIGHT PANEL: CONTENT ===== -->
           <section class="panel content-panel slide-up-2">
             <div class="panel-header">
               <div class="header-title">
@@ -279,10 +354,21 @@
                   <span id="statusMessage">Ready to generate.</span>
                 </div>
 
-                <button type="submit" id="generateBtn" class="generate-btn">
-                  <i class="fa-solid fa-wand-magic-sparkles"></i>
-                  <span>Generate AI Test</span>
-                </button>
+                <!-- ✅ TWO BUTTONS: WORD + PDF -->
+                <div class="btn-row">
+                  <button type="submit" id="generateBtn" class="generate-btn">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    <span>Generate Word (.docx)</span>
+                  </button>
+                  <button
+                    type="button"
+                    id="generatePdfBtn"
+                    class="generate-btn pdf-btn"
+                  >
+                    <i class="fa-solid fa-file-pdf"></i>
+                    <span>Export as PDF</span>
+                  </button>
+                </div>
               </div>
             </div>
           </section>
