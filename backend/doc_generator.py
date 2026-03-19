@@ -340,7 +340,7 @@ def generate_word_file(academy_name, subject, class_name, test_date, time_allowe
 
     # Header mein ek 2-column table banao
     # [LOGO] | [ACADEMY NAME centered]
-    hdr_table = header.add_table(rows=1, cols=2)
+    hdr_table = header.add_table(rows=1, cols=2, width=Inches(7.67))
     hdr_table.style = 'Table Grid'
 
     # Table borders hatao
