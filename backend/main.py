@@ -1,28 +1,36 @@
-from fastapi import FastAPI, Form, File, UploadFile, HTTPException
-from fastapi.responses import FileResponse
+from fastapi import FastAPI, Form, File, UploadFile, HTTPException, Request
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Optional, List
 from ai_service import extract_test_data
 from doc_generator import generate_word_file
 import os
 import subprocess
+import traceback # Added to track exact errors
 
 app = FastAPI()
 
-# --- CORS FIX APPLIED HERE ---
+# --- BULLETPROOF CORS FIX ---
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://ai-test-generator-lac.vercel.app",  # Your Vercel frontend
-        "http://localhost:5500",
-        "http://127.0.0.1:5500"
-        # Notice: "*" is completely removed from here to prevent credential conflicts
-    ],
-    allow_credentials=True,
+    allow_origins=["*"],  # Allow all domains
+    allow_credentials=False, # Set to False so "*" works perfectly
     allow_methods=["*"],
     allow_headers=["*"],
-    expose_headers=["Content-Disposition"] # Allows frontend to read the downloaded filename
+    expose_headers=["Content-Disposition"]
 )
+
+# --- GLOBAL ERROR CATCHER ---
+# This stops FastAPI from dropping CORS headers when a 500 error happens
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    print("\n=== ❌ CRITICAL BACKEND ERROR ❌ ===")
+    traceback.print_exc()  # This prints the exact line of the crash to Render logs
+    print("====================================\n")
+    return JSONResponse(
+        status_code=500,
+        content={"detail": f"Server crashed: {str(exc)}"}
+    )
 
 # ==========================================
 # HELPER: Word file generate karna
