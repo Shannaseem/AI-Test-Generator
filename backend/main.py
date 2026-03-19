@@ -12,15 +12,15 @@ app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "https://ai-test-generator-lac.vercel.app",
+        "https://ai-test-generator-lac.vercel.app",  # Your Vercel frontend
         "http://localhost:5500",
-        "http://127.0.0.1:5500",
-        "*"
+        "http://127.0.0.1:5500"
+        # Removed "*" to fix the credentials conflict
     ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
-    expose_headers=["Content-Disposition"]
+    expose_headers=["Content-Disposition"] # Allows frontend to read the downloaded filename
 )
 
 # ==========================================
