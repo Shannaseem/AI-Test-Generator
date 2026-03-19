@@ -9,13 +9,14 @@ import subprocess
 
 app = FastAPI()
 
+# --- CORS FIX APPLIED HERE ---
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "https://ai-test-generator-lac.vercel.app",  # Your Vercel frontend
         "http://localhost:5500",
         "http://127.0.0.1:5500"
-        # Removed "*" to fix the credentials conflict
+        # Notice: "*" is completely removed from here to prevent credential conflicts
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -209,12 +210,15 @@ async def generate_pdf_endpoint(
 
     except FileNotFoundError:
         try:
+            # --- PDF FALLBACK FIX APPLIED HERE ---
             from docx2pdf import convert
-            convert(output_file, pdf_output)
+            abs_output = os.path.abspath(output_file)
+            abs_pdf = os.path.abspath(pdf_output)
+            convert(abs_output, abs_pdf)
         except Exception as e2:
             raise HTTPException(
                 status_code=500,
-                detail=f"PDF conversion failed. Error: {str(e2)}"
+                detail=f"PDF conversion failed. (Note: Microsoft Word must be installed for local PDF export). Error: {str(e2)}"
             )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
