@@ -346,7 +346,7 @@ def generate_word_file(academy_name, subject, class_name, test_date, time_allowe
             pass
 
     # Header table: [LOGO | ACADEMY NAME]
-    hdr_table = header.add_table(rows=1, cols=2)
+    hdr_table = header.add_table(rows=1, cols=2, width=Inches(7.67))
     remove_table_borders(hdr_table)
 
     logo_cell = hdr_table.rows[0].cells[0]
