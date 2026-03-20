@@ -77,7 +77,7 @@ def remove_table_borders(table):
 
 
 def add_side_by_side_bilingual(doc, eng_text, urdu_text, num_prefix="", font_size=12, space_after=4):
-    tbl = doc.add_table(rows=1, cols=2, width=Inches(7.67))
+    tbl = doc.add_table(rows=1, cols=2)
     tbl.style = 'Table Grid'
     remove_table_borders(tbl)
 
@@ -346,7 +346,7 @@ def generate_word_file(academy_name, subject, class_name, test_date, time_allowe
             pass
 
     # Header table: [LOGO | ACADEMY NAME]
-    hdr_table = header.add_table(rows=1, cols=2, width=Inches(7.67))
+    hdr_table = header.add_table(rows=1, cols=2)
     remove_table_borders(hdr_table)
 
     logo_cell = hdr_table.rows[0].cells[0]
