@@ -593,3 +593,137 @@ body {
     flex-direction: column;
   }
 }
+/* ==========================================
+   STATE 2: PREVIEW & REFINE STYLES
+   ========================================== */
+.preview-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border-light);
+  flex-shrink: 0;
+}
+.back-btn {
+  background: transparent;
+  border: 1px solid var(--border-light);
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-sub);
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.back-btn:hover {
+  background: #f1f5f9;
+  color: var(--text-main);
+  border-color: #cbd5e1;
+}
+.preview-hint {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent-indigo);
+  background: #e0e7ff;
+  padding: 4px 10px;
+  border-radius: 12px;
+}
+
+/* The Virtual A4 Paper */
+.paper-preview {
+  flex: 1;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  padding: 35px 40px;
+  overflow-y: auto;
+  font-family: "Times New Roman", Times, serif;
+  color: #000;
+  margin-bottom: 12px;
+  line-height: 1.5;
+}
+.paper-preview h1,
+.paper-preview h2,
+.paper-preview h3 {
+  font-family: "Times New Roman", Times, serif;
+  margin-bottom: 10px;
+}
+.paper-preview p {
+  margin-bottom: 8px;
+}
+
+/* Skeleton Loader for Preview */
+.skeleton-loader {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  animation: pulse 1.5s infinite ease-in-out;
+}
+.skeleton-line {
+  height: 14px;
+  background: #e2e8f0;
+  border-radius: 4px;
+}
+@keyframes pulse {
+  0% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.6;
+  }
+}
+
+/* AI Interactive Editor Box */
+.ai-editor-box {
+  display: flex;
+  background: #fffbeb;
+  border: 1px solid #fde047;
+  border-radius: 12px;
+  padding: 6px;
+  flex-shrink: 0;
+  box-shadow: 0 4px 10px rgba(253, 224, 71, 0.15);
+  transition: var(--transition);
+}
+.ai-editor-box:focus-within {
+  border-color: #facc15;
+  box-shadow: 0 0 0 4px rgba(250, 204, 21, 0.2);
+}
+.ai-editor-box input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  padding: 10px 15px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #9a3412;
+  outline: none;
+}
+.ai-editor-box input::placeholder {
+  color: #d97706;
+}
+.ai-editor-box button {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: white;
+  border: none;
+  padding: 0 20px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: var(--transition);
+}
+.ai-editor-box button:hover {
+  transform: scale(1.02);
+  background: linear-gradient(135deg, #f59e0b, #b45309);
+}

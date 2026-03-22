@@ -60,7 +60,7 @@
                     type="text"
                     id="academyName"
                     required
-                    placeholder="e.g. Paragon Academy"
+                    placeholder="e.g. ABC Academy"
                   />
                 </div>
 
@@ -221,82 +221,154 @@
             <div class="panel-header">
               <div class="header-title">
                 <i class="fa-solid fa-brain header-icon"></i>
-                <h2>Source Material & AI Magic</h2>
+                <h2 id="rightPanelTitle">Source Material & AI Magic</h2>
               </div>
-              <span class="badge">Text, PDFs & Images</span>
+              <span class="badge" id="rightPanelBadge"
+                >Text, PDFs & Images</span
+              >
             </div>
 
-            <div class="panel-body smart-input-container">
-              <input
-                type="text"
-                id="magicPrompt"
-                class="sleek-magic-box"
-                placeholder="✨ Magic Box: Tell AI exactly what you want... (Optional)"
-              />
+            <div
+              class="panel-body smart-input-container"
+              style="display: flex; flex-direction: column; height: 100%"
+            >
+              <div
+                id="inputState"
+                style="display: flex; flex-direction: column; flex: 1"
+              >
+                <div class="smart-input-box" id="dropZone">
+                  <textarea
+                    id="magicPrompt"
+                    class="magic-box-textarea custom-scrollbar"
+                    placeholder="✨ AI Command (Optional): Tell AI exactly how you want the test..."
+                  ></textarea>
 
-              <div class="smart-input-box" id="dropZone">
-                <textarea
-                  id="bookText"
-                  class="custom-scrollbar"
-                  placeholder="Type or paste syllabus text here...&#10;&#10;Or drag and drop PDFs / press Ctrl+V to paste Images directly."
-                ></textarea>
+                  <textarea
+                    id="bookText"
+                    class="custom-scrollbar"
+                    placeholder="Type or paste syllabus text here...&#10;Or drag and drop PDFs / press Ctrl+V to paste Images directly."
+                  ></textarea>
 
-                <div
-                  id="previewContainer"
-                  class="file-previews custom-scrollbar hidden"
-                ></div>
+                  <div
+                    id="previewContainer"
+                    class="file-previews custom-scrollbar hidden"
+                  ></div>
 
-                <div class="smart-box-footer">
-                  <button
-                    type="button"
-                    class="attach-btn"
-                    onclick="document.getElementById('fileInput').click()"
-                  >
-                    <i class="fa-solid fa-paperclip"></i> Add Files
-                  </button>
-                  <span class="limit-info"
-                    >Max 10 files (Ctrl+V Supported)</span
-                  >
-                  <input
-                    type="file"
-                    id="fileInput"
-                    multiple
-                    accept=".pdf, image/png, image/jpeg, image/jpg, image/webp"
-                    class="hidden"
-                  />
+                  <div class="smart-box-footer">
+                    <button
+                      type="button"
+                      class="attach-btn"
+                      onclick="document.getElementById('fileInput').click()"
+                    >
+                      <i class="fa-solid fa-paperclip"></i> Add Files
+                    </button>
+                    <span class="limit-info"
+                      >Max 10 files (Ctrl+V Supported)</span
+                    >
+                    <input
+                      type="file"
+                      id="fileInput"
+                      multiple
+                      accept=".pdf, image/png, image/jpeg, image/jpg, image/webp"
+                      class="hidden"
+                    />
+                  </div>
+                </div>
+
+                <div class="action-zone" style="margin-top: 15px">
+                  <div id="progressContainer" class="progress-box hidden">
+                    <div class="progress-labels">
+                      <span id="progressText" class="progress-status"
+                        >Analyzing material...</span
+                      >
+                      <span id="progressPercent" class="progress-value"
+                        >0%</span
+                      >
+                    </div>
+                    <div class="progress-track">
+                      <div id="progressBar" class="progress-fill"></div>
+                    </div>
+                  </div>
+
+                  <div id="statusArea" class="hidden status-notification">
+                    <i class="fa-solid fa-circle-info status-icon"></i>
+                    <span id="statusMessage">Ready to generate.</span>
+                  </div>
+
+                  <div class="btn-row">
+                    <button
+                      type="submit"
+                      id="generatePreviewBtn"
+                      class="generate-btn"
+                      style="width: 100%"
+                    >
+                      <i class="fa-solid fa-eye"></i>
+                      <span>Generate Test Preview</span>
+                    </button>
+                  </div>
                 </div>
               </div>
 
-              <div class="action-zone">
-                <div id="progressContainer" class="progress-box hidden">
-                  <div class="progress-labels">
-                    <span id="progressText" class="progress-status"
-                      >Analyzing material...</span
-                    >
-                    <span id="progressPercent" class="progress-value">0%</span>
-                  </div>
-                  <div class="progress-track">
-                    <div id="progressBar" class="progress-fill"></div>
+              <div
+                id="previewState"
+                class="hidden"
+                style="
+                  display: flex;
+                  flex-direction: column;
+                  flex: 1;
+                  min-height: 0;
+                "
+              >
+                <div class="preview-toolbar">
+                  <button type="button" id="backToEditBtn" class="back-btn">
+                    <i class="fa-solid fa-arrow-left"></i> Back to Edit
+                  </button>
+                  <span class="preview-hint"
+                    >Review your paper before downloading</span
+                  >
+                </div>
+
+                <div
+                  class="paper-preview custom-scrollbar"
+                  id="paperPreviewContent"
+                >
+                  <div class="skeleton-loader">
+                    <div
+                      class="skeleton-line"
+                      style="width: 60%; height: 24px; margin: 0 auto 20px auto"
+                    ></div>
+                    <div class="skeleton-line" style="width: 100%"></div>
+                    <div class="skeleton-line" style="width: 90%"></div>
+                    <div class="skeleton-line" style="width: 95%"></div>
+                    <div class="skeleton-line" style="width: 80%"></div>
                   </div>
                 </div>
 
-                <div id="statusArea" class="hidden status-notification">
-                  <i class="fa-solid fa-circle-info status-icon"></i>
-                  <span id="statusMessage">Ready to generate.</span>
+                <div class="ai-editor-box">
+                  <input
+                    type="text"
+                    id="aiRefinePrompt"
+                    placeholder="E.g., Change MCQ #3, or make Short Questions harder..."
+                  />
+                  <button type="button" id="aiRefineBtn">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i> Update
+                  </button>
                 </div>
 
-                <div class="btn-row">
-                  <button type="submit" id="generateBtn" class="generate-btn">
-                    <i class="fa-solid fa-wand-magic-sparkles"></i>
-                    <span>Generate Word (.docx)</span>
+                <div class="btn-row" style="margin-top: 12px; flex-shrink: 0">
+                  <button
+                    type="button"
+                    id="downloadWordBtn"
+                    class="generate-btn"
+                  >
+                    <i class="fa-solid fa-file-word"></i> Download Word
                   </button>
                   <button
                     type="button"
-                    id="generatePdfBtn"
+                    id="downloadPdfBtn"
                     class="generate-btn pdf-btn"
                   >
-                    <i class="fa-solid fa-file-pdf"></i>
-                    <span>Export as PDF</span>
+                    <i class="fa-solid fa-file-pdf"></i> Download PDF
                   </button>
                 </div>
               </div>

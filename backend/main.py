@@ -7,6 +7,7 @@ from doc_generator import generate_word_file
 import os
 import subprocess
 import traceback
+import json
 
 app = FastAPI()
 
@@ -30,16 +31,24 @@ async def global_exception_handler(request: Request, exc: Exception):
         headers={"Access-Control-Allow-Origin": "*"} 
     )
 
-async def build_test(
-    academy_name, subject, class_name, test_date, time_allowed,
-    syllabus, long_q_marks, template_style,
-    short_total, short_attempt, exam_pattern, short_groups,
-    long_total, long_attempt,
-    bilingual, magic_prompt,
-    generate_answer_key, text, files
+# ==========================================
+# STEP 1: PREVIEW ENDPOINT (Runs AI only)
+# ==========================================
+@app.post("/generate-preview")
+async def generate_preview_endpoint(
+    short_total: str = Form("8"),
+    short_attempt: str = Form("5"),
+    exam_pattern: str = Form("chapter"),
+    short_groups: str = Form("1"),
+    long_total: str = Form("3"),
+    long_attempt: str = Form("2"),
+    bilingual: str = Form("no"),
+    magic_prompt: Optional[str] = Form(""),
+    text: Optional[str] = Form(""),
+    files: List[UploadFile] = File([]),
 ):
-    print(f"\n--- Nayi Request: {academy_name} | Pattern: {exam_pattern} | Groups: {short_groups} ---")
-
+    print(f"\n--- AI PREVIEW REQUEST | Pattern: {exam_pattern} | Groups: {short_groups} ---")
+    
     files_data = []
     if files:
         for file in files:
@@ -50,29 +59,22 @@ async def build_test(
                     files_data.append({
                         "mime_type": f_mime, "data": f_bytes, "filename": file.filename
                     })
-
     try:
         ai_data = extract_test_data(
             text=text, files_data=files_data, short_t=short_total, short_a=short_attempt,
             long_t=long_total, long_a=long_attempt, exam_pattern=exam_pattern, short_groups=short_groups,
             magic_prompt=magic_prompt, bilingual=bilingual
         )
-        print("✅ AI data successfully extract ho gaya.")
+        print("✅ AI JSON successfully extracted for Preview.")
+        return JSONResponse(content=ai_data)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-    output_file = generate_word_file(
-        academy_name=academy_name, subject=subject, class_name=class_name,
-        test_date=test_date, time_allowed=time_allowed, syllabus=syllabus,
-        long_q_marks=long_q_marks, ai_data=ai_data, template_style=template_style,
-        short_total=short_total, short_attempt=short_attempt, exam_pattern=exam_pattern, short_groups=short_groups,
-        long_total=long_total, long_attempt=long_attempt, bilingual=bilingual,
-        generate_answer_key=generate_answer_key
-    )
-    return output_file
-
-@app.post("/generate-test")
-async def generate_test_endpoint(
+# ==========================================
+# STEP 2: DOWNLOAD ENDPOINTS (Instant File Generation)
+# ==========================================
+@app.post("/generate-word")
+async def generate_word_endpoint(
     academy_name: str = Form(...),
     subject: str = Form(...),
     class_name: str = Form(...),
@@ -88,16 +90,19 @@ async def generate_test_endpoint(
     long_total: str = Form("3"),
     long_attempt: str = Form("2"),
     bilingual: str = Form("no"),
-    magic_prompt: Optional[str] = Form(""),
     generate_answer_key: str = Form("no"),
-    text: Optional[str] = Form(""),
-    files: List[UploadFile] = File([]),
+    ai_data_json: str = Form(...) # Frontend sends the JSON string back!
 ):
-    output_file = await build_test(
-        academy_name, subject, class_name, test_date, time_allowed,
-        syllabus, long_q_marks, template_style, short_total, short_attempt,
-        exam_pattern, short_groups, long_total, long_attempt, bilingual, magic_prompt,
-        generate_answer_key, text, files
+    print(f"\n--- INSTANT DOCX REQUEST: {academy_name} ---")
+    ai_data = json.loads(ai_data_json)
+
+    output_file = generate_word_file(
+        academy_name=academy_name, subject=subject, class_name=class_name,
+        test_date=test_date, time_allowed=time_allowed, syllabus=syllabus,
+        long_q_marks=long_q_marks, ai_data=ai_data, template_style=template_style,
+        short_total=short_total, short_attempt=short_attempt, exam_pattern=exam_pattern, short_groups=short_groups,
+        long_total=long_total, long_attempt=long_attempt, bilingual=bilingual,
+        generate_answer_key=generate_answer_key
     )
     
     clean = lambda s: s.replace(" ", "_").replace("/", "_").replace("\\", "_")
@@ -110,31 +115,22 @@ async def generate_test_endpoint(
 
 @app.post("/generate-pdf")
 async def generate_pdf_endpoint(
-    academy_name: str = Form(...),
-    subject: str = Form(...),
-    class_name: str = Form(...),
-    test_date: str = Form(...),
-    time_allowed: str = Form(...),
-    syllabus: str = Form(...),
-    long_q_marks: str = Form(...),
-    template_style: str = Form("table"),
-    short_total: str = Form("8"),
-    short_attempt: str = Form("5"),
-    exam_pattern: str = Form("chapter"),
-    short_groups: str = Form("1"),
-    long_total: str = Form("3"),
-    long_attempt: str = Form("2"),
-    bilingual: str = Form("no"),
-    magic_prompt: Optional[str] = Form(""),
-    generate_answer_key: str = Form("no"),
-    text: Optional[str] = Form(""),
-    files: List[UploadFile] = File([]),
+    academy_name: str = Form(...), subject: str = Form(...), class_name: str = Form(...),
+    test_date: str = Form(...), time_allowed: str = Form(...), syllabus: str = Form(...),
+    long_q_marks: str = Form(...), template_style: str = Form("table"), short_total: str = Form("8"),
+    short_attempt: str = Form("5"), exam_pattern: str = Form("chapter"), short_groups: str = Form("1"),
+    long_total: str = Form("3"), long_attempt: str = Form("2"), bilingual: str = Form("no"),
+    generate_answer_key: str = Form("no"), ai_data_json: str = Form(...)
 ):
-    output_file = await build_test(
-        academy_name, subject, class_name, test_date, time_allowed,
-        syllabus, long_q_marks, template_style, short_total, short_attempt,
-        exam_pattern, short_groups, long_total, long_attempt, bilingual, magic_prompt,
-        generate_answer_key, text, files
+    print(f"\n--- INSTANT PDF REQUEST: {academy_name} ---")
+    ai_data = json.loads(ai_data_json)
+
+    output_file = generate_word_file(
+        academy_name=academy_name, subject=subject, class_name=class_name, test_date=test_date,
+        time_allowed=time_allowed, syllabus=syllabus, long_q_marks=long_q_marks, ai_data=ai_data,
+        template_style=template_style, short_total=short_total, short_attempt=short_attempt,
+        exam_pattern=exam_pattern, short_groups=short_groups, long_total=long_total, long_attempt=long_attempt,
+        bilingual=bilingual, generate_answer_key=generate_answer_key
     )
     
     pdf_output = output_file.replace(".docx", ".pdf")
@@ -154,8 +150,5 @@ async def generate_pdf_endpoint(
         raise HTTPException(status_code=500, detail=str(e))
 
     if not os.path.exists(pdf_output): raise HTTPException(status_code=500, detail="PDF generation failed.")
-
     clean = lambda s: s.replace(" ", "_").replace("/", "_").replace("\\", "_")
-    dynamic_name = f"{clean(class_name)}_{clean(subject)}_{clean(syllabus)}.pdf"
-
-    return FileResponse(pdf_output, media_type="application/pdf", filename=dynamic_name)
+    return FileResponse(pdf_output, media_type="application/pdf", filename=f"{clean(class_name)}_{clean(subject)}.pdf")
