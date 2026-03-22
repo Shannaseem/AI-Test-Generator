@@ -12,12 +12,14 @@ from docx.oxml.shared import OxmlElement, qn
 def clean_text(text):
     return re.sub(r'^\d+[\.\)]\s*', '', str(text)).strip()
 
+
 def set_rtl_paragraph(paragraph):
     pPr = paragraph._p.get_or_add_pPr()
     bidi = OxmlElement('w:bidi')
     bidi.set(qn('w:val'), '1')
     pPr.append(bidi)
     paragraph.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+
 
 def add_urdu_run(paragraph, text, font_size=12, bold=False):
     run = paragraph.add_run(text)
@@ -34,9 +36,28 @@ def add_urdu_run(paragraph, text, font_size=12, bold=False):
     rFonts.set(qn('w:cs'), 'Jameel Noori Nastaleeq')
     return run
 
+
 def remove_table_borders(table):
-    tbl_pr = table._tbl.get_or_add_tblPr()
-    tbl_borders = OxmlElement('w:tblBorders')
+    tbl = table._tbl
+    
+    # Safely get or add w:tblPr (Table Properties) using XPath
+    tbl_pr_list = tbl.xpath('./w:tblPr')
+    if tbl_pr_list:
+        tbl_pr = tbl_pr_list[0]
+    else:
+        tbl_pr = OxmlElement('w:tblPr')
+        tbl.insert(0, tbl_pr)
+        
+    # Safely get or add w:tblBorders
+    tbl_borders_list = tbl_pr.xpath('./w:tblBorders')
+    if tbl_borders_list:
+        tbl_borders = tbl_borders_list[0]
+        tbl_borders.clear() # Clear existing borders
+    else:
+        tbl_borders = OxmlElement('w:tblBorders')
+        tbl_pr.append(tbl_borders)
+
+    # Apply 'none' to all border sides
     for border_name in ['top', 'left', 'bottom', 'right', 'insideH', 'insideV']:
         border = OxmlElement(f'w:{border_name}')
         border.set(qn('w:val'), 'none')
@@ -44,10 +65,10 @@ def remove_table_borders(table):
         border.set(qn('w:space'), '0')
         border.set(qn('w:color'), 'auto')
         tbl_borders.append(border)
-    tbl_pr.append(tbl_borders)
+
 
 def add_side_by_side_bilingual(doc, eng_text, urdu_text, num_prefix="", font_size=12, space_after=4):
-    tbl = doc.add_table(rows=1, cols=2, width=Inches(7.67))
+    tbl = doc.add_table(rows=1, cols=2)
     tbl.style = 'Table Grid'
     remove_table_borders(tbl)
 
@@ -77,6 +98,7 @@ def add_side_by_side_bilingual(doc, eng_text, urdu_text, num_prefix="", font_siz
     add_urdu_run(p_urdu, urdu_text, font_size=font_size + 2)
 
     return tbl
+
 
 def add_answer_key_page(doc, mcqs, short_qs, long_qs, bilingual="no"):
     doc.add_page_break()
@@ -207,20 +229,27 @@ def add_answer_key_page(doc, mcqs, short_qs, long_qs, bilingual="no"):
                 r_line.font.color.rgb = RGBColor(0x94, 0xA3, 0xB8)
                 r_line.font.italic = True
 
+
 # ==========================================
 # MAIN FUNCTION
 # ==========================================
 def generate_word_file(academy_name, subject, class_name, test_date, time_allowed,
                        syllabus, long_q_marks, ai_data, template_style,
                        short_total="8", short_attempt="5", exam_pattern="chapter",
-                       long_total="3", long_attempt="2", bilingual="no",
+                       short_groups="1", long_total="3", long_attempt="2", bilingual="no",
                        generate_answer_key="no"):
 
     doc = Document()
     is_bilingual = (bilingual == "yes")
 
-    # Pattern Logic
-    short_groups_int = 2 if exam_pattern == "board" else 1
+    # --- SMART PATTERN LOGIC ---
+    if exam_pattern == "board":
+        try:
+            short_groups_int = int(short_groups)
+        except:
+            short_groups_int = 2
+    else:
+        short_groups_int = 1
 
     # --- PAGE SETUP ---
     section = doc.sections[0]
@@ -243,15 +272,21 @@ def generate_word_file(academy_name, subject, class_name, test_date, time_allowe
 
     # --- MARKS CALCULATION ---
     mcq_marks = len(mcqs) * 1
-    try: short_attempt_int = int(short_attempt)
-    except: short_attempt_int = len(short_qs)
+    try:
+        short_attempt_int = int(short_attempt)
+    except:
+        short_attempt_int = len(short_qs)
     short_marks_per_group = short_attempt_int * 2
     short_marks_total = short_marks_per_group * short_groups_int
 
-    try: long_q_val = sum([int(m.strip()) for m in str(long_q_marks).split('+')])
-    except: long_q_val = 9
-    try: long_attempt_int = int(long_attempt)
-    except: long_attempt_int = len(long_qs)
+    try:
+        long_q_val = sum([int(m.strip()) for m in str(long_q_marks).split('+')])
+    except:
+        long_q_val = 9
+    try:
+        long_attempt_int = int(long_attempt)
+    except:
+        long_attempt_int = len(long_qs)
     long_marks = long_attempt_int * long_q_val
     total_marks = mcq_marks + short_marks_total + long_marks
 
@@ -265,12 +300,16 @@ def generate_word_file(academy_name, subject, class_name, test_date, time_allowe
     # CLEAN HEADER — Academy Name Centered
     # ==========================================
     header = section.header
+
+    # Clear default empty paragraphs
     for para in header.paragraphs:
         try:
             p = para._p
             p.getparent().remove(p)
-        except: pass
+        except:
+            pass
 
+    # Academy Name
     name_para = header.add_paragraph()
     name_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
     name_para.paragraph_format.space_after = Pt(0)
@@ -279,6 +318,7 @@ def generate_word_file(academy_name, subject, class_name, test_date, time_allowe
     run_title.font.size = Pt(28)
     run_title.font.bold = True
 
+    # Subject | Class | Syllabus
     p_sub = header.add_paragraph()
     p_sub.paragraph_format.space_after = Pt(4)
     tabs = p_sub.paragraph_format.tab_stops
@@ -289,6 +329,7 @@ def generate_word_file(academy_name, subject, class_name, test_date, time_allowe
     run_sub.font.size = Pt(12)
     run_sub.font.bold = True
 
+    # Bottom border line
     pPr = p_sub._p.get_or_add_pPr()
     pBdr = OxmlElement('w:pBdr')
     bot = OxmlElement('w:bottom')
@@ -448,8 +489,10 @@ def generate_word_file(academy_name, subject, class_name, test_date, time_allowe
     # ==========================================
     # SHORT QUESTIONS
     # ==========================================
-    try: short_total_int = int(short_total)
-    except: short_total_int = len(short_qs)
+    try:
+        short_total_int = int(short_total)
+    except:
+        short_total_int = len(short_qs)
 
     for g in range(short_groups_int):
         group_start = g * short_total_int
@@ -461,7 +504,9 @@ def generate_word_file(academy_name, subject, class_name, test_date, time_allowe
         q_number = g + 2
         sh = doc.add_paragraph()
         sh.paragraph_format.space_before = Pt(8)
-        r_sq = sh.add_run(f'Q{q_number}. Short Questions (Attempt any {short_attempt} out of {short_total})')
+        r_sq = sh.add_run(
+            f'Q{q_number}. Short Questions (Attempt any {short_attempt} out of {short_total})'
+        )
         r_sq.bold = True
         r_sq.font.size = Pt(14)
         sh.paragraph_format.tab_stops.add_tab_stop(Inches(7.67), WD_TAB_ALIGNMENT.RIGHT)
@@ -488,7 +533,9 @@ def generate_word_file(academy_name, subject, class_name, test_date, time_allowe
     # ==========================================
     lh = doc.add_paragraph()
     lh.paragraph_format.space_before = Pt(8)
-    r_lq = lh.add_run(f'Long Questions (Attempt any {long_attempt} out of {long_total})')
+    r_lq = lh.add_run(
+        f'Long Questions (Attempt any {long_attempt} out of {long_total})'
+    )
     r_lq.bold = True
     r_lq.font.size = Pt(14)
     lh.paragraph_format.tab_stops.add_tab_stop(Inches(7.67), WD_TAB_ALIGNMENT.RIGHT)
@@ -497,17 +544,21 @@ def generate_word_file(academy_name, subject, class_name, test_date, time_allowe
     for idx, lq in enumerate(long_qs, start=1):
         lq_eng = lq.get('text_en', '')
         lq_urdu = lq.get('text_ur', '')
+        
+        # Replace literal double backslashes with actual newlines
         lq_eng = clean_text(lq_eng).replace('\\n', '\n')
         eng_parts = lq_eng.split('\n')
 
         for part_idx, part in enumerate(eng_parts):
             part = part.strip()
-            if not part: continue
+            if not part:
+                continue
 
             if is_bilingual and lq_urdu:
                 lq_urdu_clean = clean_text(lq_urdu).replace('\\n', '\n')
                 urdu_parts = lq_urdu_clean.split('\n')
                 urdu_part = urdu_parts[part_idx].strip() if part_idx < len(urdu_parts) else ""
+                
                 add_side_by_side_bilingual(
                     doc, part, urdu_part,
                     num_prefix=f"{idx}. " if part_idx == 0 else "    ",
@@ -525,6 +576,7 @@ def generate_word_file(academy_name, subject, class_name, test_date, time_allowe
                     p.paragraph_format.first_line_indent = Inches(0)
                 p.add_run(part)
 
+    # ANSWER KEY
     if generate_answer_key == "yes":
         add_answer_key_page(doc, mcqs, short_qs, long_qs, bilingual)
 

@@ -34,6 +34,18 @@ window.addEventListener("offline", updateOnlineStatus);
 updateOnlineStatus();
 
 // ==========================================
+// SMART UI: EXAM PATTERN LOGIC
+// ==========================================
+document.getElementById("examPattern").addEventListener("change", function (e) {
+  const boardOptions = document.getElementById("boardExtraOptions");
+  if (e.target.value === "board") {
+    boardOptions.classList.remove("hidden");
+  } else {
+    boardOptions.classList.add("hidden");
+  }
+});
+
+// ==========================================
 // FILE DRAG & DROP + CLIPBOARD PASTE
 // ==========================================
 let selectedFiles = [];
@@ -231,14 +243,13 @@ function errorProgressBar(msg) {
   document.getElementById("progressText").innerHTML =
     `<span style='color:#dc2626;'>${msg}</span>`;
 }
-
 // ==========================================
-// CLEAN FORM DATA BUILDER
+// ✅ BUILD FORM DATA
 // ==========================================
 function buildFormData(exportType = "docx") {
   const textVal = document.getElementById("bookText").value.trim();
-  const formData = new FormData();
 
+  const formData = new FormData();
   formData.append("academy_name", document.getElementById("academyName").value);
   formData.append("subject", document.getElementById("subject").value);
   formData.append("class_name", document.getElementById("className").value);
@@ -249,9 +260,23 @@ function buildFormData(exportType = "docx") {
   );
   formData.append("syllabus", document.getElementById("syllabus").value);
   formData.append("bilingual", document.getElementById("bilingual").value);
+  formData.append(
+    "template_style",
+    document.getElementById("templateStyle").value,
+  );
 
-  // NEW EXAM PATTERN LOGIC
-  formData.append("exam_pattern", document.getElementById("examPattern").value);
+  const examPattern = document.getElementById("examPattern").value;
+  formData.append("exam_pattern", examPattern);
+
+  // Agar board hai toh extra groups bhejey ga, warna 1 group bhejey ga
+  if (examPattern === "board") {
+    formData.append(
+      "short_groups",
+      document.getElementById("shortGroups").value,
+    );
+  } else {
+    formData.append("short_groups", "1");
+  }
 
   formData.append("short_total", document.getElementById("shortTotal").value);
   formData.append(
@@ -261,10 +286,7 @@ function buildFormData(exportType = "docx") {
   formData.append("long_total", document.getElementById("longTotal").value);
   formData.append("long_attempt", document.getElementById("longAttempt").value);
   formData.append("long_q_marks", document.getElementById("longMarks").value);
-  formData.append(
-    "template_style",
-    document.getElementById("templateStyle").value,
-  );
+
   formData.append(
     "magic_prompt",
     document.getElementById("magicPrompt").value.trim(),

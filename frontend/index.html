@@ -84,12 +84,10 @@
                     type="number"
                     id="timeAllowed"
                     min="5"
-                    max="180"
-                    step="5"
                     required
                     placeholder=" "
                   />
-                  <label>Time Allowed (Min) <span class="req">*</span></label>
+                  <label>Time (Min) <span class="req">*</span></label>
                 </div>
 
                 <div class="input-group full">
@@ -97,14 +95,26 @@
                   <label>Syllabus / Chapter <span class="req">*</span></label>
                 </div>
 
-                <div class="input-group full">
+                <div class="input-group">
                   <div class="select-wrapper">
                     <select id="bilingual" required>
                       <option value="no">English Only</option>
-                      <option value="yes">Bilingual (English + Urdu) 🇵🇰</option>
+                      <option value="yes">Bilingual (Eng+Urdu)</option>
                     </select>
                     <label class="active-label"
-                      >Language Format <span class="req">*</span></label
+                      >Language <span class="req">*</span></label
+                    >
+                    <i class="fa-solid fa-chevron-down select-icon"></i>
+                  </div>
+                </div>
+                <div class="input-group">
+                  <div class="select-wrapper">
+                    <select id="templateStyle" required>
+                      <option value="table">Table Format</option>
+                      <option value="column">Two Columns</option>
+                    </select>
+                    <label class="active-label"
+                      >Doc Style <span class="req">*</span></label
                     >
                     <i class="fa-solid fa-chevron-down select-icon"></i>
                   </div>
@@ -112,19 +122,41 @@
 
                 <div
                   class="input-group full"
-                  style="margin-top: 5px; margin-bottom: 5px"
+                  style="
+                    margin-top: 10px;
+                    border-top: 1px dashed var(--border-light);
+                    padding-top: 15px;
+                  "
                 >
                   <div class="select-wrapper">
                     <select id="examPattern" required>
-                      <option value="chapter">
-                        Chapter / Weekly Test (Single Parts)
-                      </option>
-                      <option value="board">
-                        Full Term / Board Pattern (With Part A/B)
-                      </option>
+                      <option value="chapter">Chapter / Weekly Test</option>
+                      <option value="board">Full Term / Board Pattern</option>
                     </select>
                     <label class="active-label"
-                      >Exam Pattern / Logic <span class="req">*</span></label
+                      >Exam Pattern <span class="req">*</span></label
+                    >
+                    <i class="fa-solid fa-chevron-down select-icon"></i>
+                  </div>
+                </div>
+
+                <div
+                  id="boardExtraOptions"
+                  class="input-group full hidden"
+                  style="
+                    background: #f8fafc;
+                    padding: 10px;
+                    border-radius: 10px;
+                    margin-bottom: 10px;
+                  "
+                >
+                  <div class="select-wrapper">
+                    <select id="shortGroups" required>
+                      <option value="2">2 Groups (e.g. Q2, Q3)</option>
+                      <option value="3">3 Groups (e.g. Q2, Q3, Q4)</option>
+                    </select>
+                    <label class="active-label"
+                      >Short Q Groups <span class="req">*</span></label
                     >
                     <i class="fa-solid fa-chevron-down select-icon"></i>
                   </div>
@@ -136,8 +168,7 @@
                     id="shortTotal"
                     min="1"
                     required
-                    placeholder=" "
-                    value="8"
+                    placeholder="e.g. 8"
                   />
                   <label>Total Short Qs <span class="req">*</span></label>
                 </div>
@@ -147,8 +178,7 @@
                     id="shortAttempt"
                     min="1"
                     required
-                    placeholder=" "
-                    value="5"
+                    placeholder="e.g. 5"
                   />
                   <label>Attempt Short Qs <span class="req">*</span></label>
                 </div>
@@ -159,8 +189,7 @@
                     id="longTotal"
                     min="1"
                     required
-                    placeholder=" "
-                    value="3"
+                    placeholder="e.g. 3"
                   />
                   <label>Total Long Qs <span class="req">*</span></label>
                 </div>
@@ -170,49 +199,45 @@
                     id="longAttempt"
                     min="1"
                     required
-                    placeholder=" "
-                    value="2"
+                    placeholder="e.g. 2"
                   />
                   <label>Attempt Long Qs <span class="req">*</span></label>
                 </div>
-
-                <div class="input-group">
+                <div class="input-group full">
                   <input
                     type="text"
                     id="longMarks"
                     required
-                    placeholder=" "
-                    value="9"
+                    placeholder="e.g. 9 or 4+5"
                   />
                   <label>Marks per Long Q <span class="req">*</span></label>
-                </div>
-                <div class="input-group">
-                  <div class="select-wrapper">
-                    <select id="templateStyle" required>
-                      <option value="table">Table Format</option>
-                      <option value="column">Two Columns</option>
-                    </select>
-                    <label class="active-label"
-                      >Document Style <span class="req">*</span></label
-                    >
-                    <i class="fa-solid fa-chevron-down select-icon"></i>
-                  </div>
                 </div>
 
                 <div
                   class="input-group full toggles-group"
-                  style="margin-top: 10px"
+                  style="margin-top: 15px"
                 >
-                  <div class="toggle-row">
-                    <div class="toggle-item">
-                      <label class="toggle-switch">
-                        <input type="checkbox" id="generateAnswerKey" />
-                        <span class="toggle-slider"></span>
-                      </label>
-                      <span class="toggle-label">
-                        <i class="fa-solid fa-key"></i> Include Auto Answer Key
-                      </span>
-                    </div>
+                  <div
+                    class="toggle-row"
+                    style="
+                      padding: 12px;
+                      display: flex;
+                      flex-direction: row;
+                      justify-content: space-between;
+                      align-items: center;
+                    "
+                  >
+                    <span class="toggle-label" style="font-size: 13px">
+                      <i
+                        class="fa-solid fa-key"
+                        style="color: var(--accent-blue)"
+                      ></i>
+                      Auto Answer Key
+                    </span>
+                    <label class="toggle-switch" style="margin: 0">
+                      <input type="checkbox" id="generateAnswerKey" />
+                      <span class="toggle-slider"></span>
+                    </label>
                   </div>
                 </div>
               </div>

@@ -33,12 +33,12 @@ async def global_exception_handler(request: Request, exc: Exception):
 async def build_test(
     academy_name, subject, class_name, test_date, time_allowed,
     syllabus, long_q_marks, template_style,
-    short_total, short_attempt, exam_pattern,
+    short_total, short_attempt, exam_pattern, short_groups,
     long_total, long_attempt,
     bilingual, magic_prompt,
     generate_answer_key, text, files
 ):
-    print(f"\n--- Nayi Request: {academy_name} | Pattern: {exam_pattern} ---")
+    print(f"\n--- Nayi Request: {academy_name} | Pattern: {exam_pattern} | Groups: {short_groups} ---")
 
     files_data = []
     if files:
@@ -54,7 +54,7 @@ async def build_test(
     try:
         ai_data = extract_test_data(
             text=text, files_data=files_data, short_t=short_total, short_a=short_attempt,
-            long_t=long_total, long_a=long_attempt, exam_pattern=exam_pattern,
+            long_t=long_total, long_a=long_attempt, exam_pattern=exam_pattern, short_groups=short_groups,
             magic_prompt=magic_prompt, bilingual=bilingual
         )
         print("✅ AI data successfully extract ho gaya.")
@@ -65,7 +65,7 @@ async def build_test(
         academy_name=academy_name, subject=subject, class_name=class_name,
         test_date=test_date, time_allowed=time_allowed, syllabus=syllabus,
         long_q_marks=long_q_marks, ai_data=ai_data, template_style=template_style,
-        short_total=short_total, short_attempt=short_attempt, exam_pattern=exam_pattern,
+        short_total=short_total, short_attempt=short_attempt, exam_pattern=exam_pattern, short_groups=short_groups,
         long_total=long_total, long_attempt=long_attempt, bilingual=bilingual,
         generate_answer_key=generate_answer_key
     )
@@ -84,6 +84,7 @@ async def generate_test_endpoint(
     short_total: str = Form("8"),
     short_attempt: str = Form("5"),
     exam_pattern: str = Form("chapter"),
+    short_groups: str = Form("1"),
     long_total: str = Form("3"),
     long_attempt: str = Form("2"),
     bilingual: str = Form("no"),
@@ -95,7 +96,7 @@ async def generate_test_endpoint(
     output_file = await build_test(
         academy_name, subject, class_name, test_date, time_allowed,
         syllabus, long_q_marks, template_style, short_total, short_attempt,
-        exam_pattern, long_total, long_attempt, bilingual, magic_prompt,
+        exam_pattern, short_groups, long_total, long_attempt, bilingual, magic_prompt,
         generate_answer_key, text, files
     )
     
@@ -120,6 +121,7 @@ async def generate_pdf_endpoint(
     short_total: str = Form("8"),
     short_attempt: str = Form("5"),
     exam_pattern: str = Form("chapter"),
+    short_groups: str = Form("1"),
     long_total: str = Form("3"),
     long_attempt: str = Form("2"),
     bilingual: str = Form("no"),
@@ -131,7 +133,7 @@ async def generate_pdf_endpoint(
     output_file = await build_test(
         academy_name, subject, class_name, test_date, time_allowed,
         syllabus, long_q_marks, template_style, short_total, short_attempt,
-        exam_pattern, long_total, long_attempt, bilingual, magic_prompt,
+        exam_pattern, short_groups, long_total, long_attempt, bilingual, magic_prompt,
         generate_answer_key, text, files
     )
     

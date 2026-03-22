@@ -27,14 +27,17 @@ def configure_active_key():
 
 configure_active_key()
 
-def extract_test_data(text, files_data=[], short_t="8", short_a="5", long_t="3", long_a="2", exam_pattern="chapter", magic_prompt="", bilingual="no"):
+def extract_test_data(text, files_data=[], short_t="8", short_a="5", long_t="3", long_a="2", exam_pattern="chapter", short_groups="1", magic_prompt="", bilingual="no"):
     global current_key_index
 
     master_data = {"mcqs": [], "short_qs": [], "long_qs": []}
 
     # SMART EXAM PATTERN LOGIC
     if exam_pattern == "board":
-        short_groups_int = 2
+        try:
+            short_groups_int = int(short_groups)
+        except:
+            short_groups_int = 2
         parts_rule = "Divide each long question into 'Part (a)' and 'Part (b)'."
     else:
         short_groups_int = 1
