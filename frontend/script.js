@@ -1,9 +1,7 @@
 document.getElementById("testDate").valueAsDate = new Date();
 
 let selectedFiles = [];
-let currentAiData = null; // Stores AI JSON to avoid recalling Gemini
-let countdownInterval = null;
-let simulatedProgress = null;
+let currentAiData = null;
 
 // ==========================================
 // UI & NETWORK STATE
@@ -17,7 +15,7 @@ function updateOnlineStatus() {
     text.innerText = "System Online";
     btn.disabled = false;
     btn.innerHTML =
-      '<i class="fa-solid fa-eye"></i> <span>Generate Test Preview</span>';
+      '<i class="fa-solid fa-eye"></i> <span>Generate True A4 Preview</span>';
   } else {
     status.classList.add("offline");
     text.innerText = "Offline";
@@ -103,12 +101,10 @@ function handleFiles(files) {
   }
   renderPreviews();
 }
-
 function removeFile(index) {
   selectedFiles.splice(index, 1);
   renderPreviews();
 }
-
 function renderPreviews() {
   previewContainer.classList.toggle("hidden", selectedFiles.length === 0);
   previewContainer.innerHTML = "";
@@ -138,7 +134,7 @@ function renderPreviews() {
 }
 
 // ==========================================
-// BUILD FORM DATA
+// FORM DATA BUILDER
 // ==========================================
 function buildBaseFormData() {
   const fd = new FormData();
@@ -169,56 +165,92 @@ function buildBaseFormData() {
 }
 
 // ==========================================
-// RENDER PREVIEW HTML
+// RENDER TRUE A4 HTML PREVIEW
 // ==========================================
-function renderPaperPreview(data) {
-  let html = `<div style="text-align:center; border-bottom: 2px solid #cbd5e1; padding-bottom:10px; margin-bottom: 20px;">
-                <h1 style="font-size: 24px;">${document.getElementById("academyName").value.toUpperCase() || "TEST PAPER"}</h1>
-                <p><b>Subject:</b> ${document.getElementById("subject").value || "..."} | <b>Class:</b> ${document.getElementById("className").value || "..."}</p>
-              </div>`;
+function renderA4Paper(data) {
+  const acadName =
+    document.getElementById("academyName").value.toUpperCase() ||
+    "ACADEMY NAME";
+  const subj = document.getElementById("subject").value || "Subject";
+  const cls = document.getElementById("className").value || "Class";
+  const syll = document.getElementById("syllabus").value || "Syllabus";
+
+  const dateObj = new Date(document.getElementById("testDate").value);
+  const formattedDate = dateObj.toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+  const time = document.getElementById("timeAllowed").value || "60";
+
+  // Clean text function similar to Python backend
+  const cT = (text) => (text ? text.replace(/^\d+[\.\)]\s*/, "").trim() : "");
+
+  let html = `
+    <div class="header-info">
+        <h1>${acadName}</h1>
+        <p>${subj} &nbsp;|&nbsp; ${cls} &nbsp;|&nbsp; ${syll}</p>
+    </div>
+    <div class="student-info">
+        <span>Name: ____________________</span>
+        <span>Date: ${formattedDate}</span>
+        <span>Time: <u>${time} Min</u></span>
+        <span>Max Marks: <u>Calculated</u></span>
+    </div>
+  `;
 
   if (data.mcqs && data.mcqs.length > 0) {
-    html += `<h3>Multiple Choice Questions</h3><ol style="margin-left: 20px; margin-bottom: 20px;">`;
+    html += `<h3 style="margin-top:20px;">Multiple Choice Questions</h3><ol style="margin-left: 25px; margin-bottom: 30px;">`;
     data.mcqs.forEach((m) => {
-      let q = m.q_en || m.question || "";
+      let q = cT(m.q_en || m.question || "");
       if (m.q_ur)
-        q += `<br><span dir="rtl" style="font-family:'Jameel Noori Nastaleeq', Arial; float:right;">${m.q_ur}</span><div style="clear:both;"></div>`;
-      html += `<li style="margin-bottom: 15px;"><b>${q}</b><br>
-               A) ${m.a_en || m.a || ""} &nbsp;&nbsp; B) ${m.b_en || m.b || ""} <br>
-               C) ${m.c_en || m.c || ""} &nbsp;&nbsp; D) ${m.d_en || m.d || ""} <br>
-               <i style="color: #10b981;">Ans: ${m.answer || ""}</i></li>`;
+        q += `<br><span dir="rtl" style="font-family:'Jameel Noori Nastaleeq', Arial; float:right; font-size:16px;">${m.q_ur}</span><div style="clear:both;"></div>`;
+      html += `<li style="margin-bottom: 15px; padding-left: 5px;">
+               <b>${q}</b><br>
+               <table style="width:100%; margin-top:5px; table-layout:fixed;">
+                <tr>
+                 <td>A) ${cT(m.a_en || m.a)} ${m.a_ur ? '<span dir="rtl" style="float:right; font-family:\'Jameel Noori Nastaleeq\'">' + m.a_ur + "</span>" : ""}</td>
+                 <td>B) ${cT(m.b_en || m.b)} ${m.b_ur ? '<span dir="rtl" style="float:right; font-family:\'Jameel Noori Nastaleeq\'">' + m.b_ur + "</span>" : ""}</td>
+                </tr>
+                <tr>
+                 <td>C) ${cT(m.c_en || m.c)} ${m.c_ur ? '<span dir="rtl" style="float:right; font-family:\'Jameel Noori Nastaleeq\'">' + m.c_ur + "</span>" : ""}</td>
+                 <td>D) ${cT(m.d_en || m.d)} ${m.d_ur ? '<span dir="rtl" style="float:right; font-family:\'Jameel Noori Nastaleeq\'">' + m.d_ur + "</span>" : ""}</td>
+                </tr>
+               </table>
+               </li>`;
     });
     html += `</ol>`;
   }
 
   if (data.short_qs && data.short_qs.length > 0) {
-    html += `<h3>Short Questions</h3><ul style="margin-left: 20px; margin-bottom: 20px; list-style-type: none; padding:0;">`;
-    data.short_qs.forEach((sq, i) => {
-      let q = sq.text_en || sq.text || "";
+    html += `<h3 style="margin-top:20px;">Short Questions</h3><ol style="margin-left: 25px; margin-bottom: 30px;">`;
+    data.short_qs.forEach((sq) => {
+      let q = cT(sq.text_en || sq.text || "");
       if (sq.text_ur)
-        q += `<br><span dir="rtl" style="font-family:'Jameel Noori Nastaleeq', Arial; float:right;">${sq.text_ur}</span><div style="clear:both;"></div>`;
-      html += `<li style="margin-bottom: 10px;"><b>Q${i + 1}:</b> ${q}</li>`;
+        q += `<br><span dir="rtl" style="font-family:'Jameel Noori Nastaleeq', Arial; float:right; font-size:16px;">${sq.text_ur}</span><div style="clear:both;"></div>`;
+      html += `<li style="margin-bottom: 12px; padding-left: 5px;"><b>${q}</b></li>`;
     });
-    html += `</ul>`;
+    html += `</ol>`;
   }
 
   if (data.long_qs && data.long_qs.length > 0) {
-    html += `<h3>Long Questions</h3><ul style="margin-left: 20px; list-style-type: none; padding:0;">`;
-    data.long_qs.forEach((lq, i) => {
-      let q = lq.text_en || lq.text || "";
-      q = q.replace(/\\n/g, "<br>"); // Handle part A and B formatting
+    html += `<h3 style="margin-top:20px;">Long Questions</h3><ol style="margin-left: 25px; margin-bottom: 20px;">`;
+    data.long_qs.forEach((lq) => {
+      let q = cT(lq.text_en || lq.text || "");
+      q = q.replace(/\\n/g, "<br>");
       if (lq.text_ur)
-        q += `<br><span dir="rtl" style="font-family:'Jameel Noori Nastaleeq', Arial; float:right;">${lq.text_ur}</span><div style="clear:both;"></div>`;
-      html += `<li style="margin-bottom: 15px;"><b>Q${i + 1}:</b> ${q}</li>`;
+        q += `<br><span dir="rtl" style="font-family:'Jameel Noori Nastaleeq', Arial; float:right; font-size:16px;">${lq.text_ur}</span><div style="clear:both;"></div>`;
+      html += `<li style="margin-bottom: 20px; padding-left: 5px;"><b>${q}</b></li>`;
     });
-    html += `</ul>`;
+    html += `</ol>`;
   }
 
-  document.getElementById("paperPreviewContent").innerHTML = html;
+  document.getElementById("paperLoader").classList.add("hidden");
+  document.getElementById("paperContent").innerHTML = html;
 }
 
 // ==========================================
-// STEP 1: GENERATE PREVIEW (FORM SUBMIT)
+// STEP 1: GENERATE PREVIEW (API CALL)
 // ==========================================
 const BASE_URL = "https://ai-test-generator-2hsf.onrender.com";
 
@@ -237,15 +269,24 @@ document
 
     const btn = document.getElementById("generatePreviewBtn");
     const pContainer = document.getElementById("progressContainer");
-    const pFill = document.getElementById("progressBar");
     const pMsg = document.getElementById("progressText");
 
     btn.disabled = true;
     btn.innerHTML =
-      '<i class="fa-solid fa-spinner fa-spin"></i> Generating Preview...';
+      '<i class="fa-solid fa-spinner fa-spin"></i> Reading files & extracting logic...';
     pContainer.classList.remove("hidden");
-    pFill.style.width = "50%";
-    pMsg.innerText = "Extracting AI Data...";
+
+    // Realistic Progress Messaging
+    let step = 0;
+    const messages = [
+      "Reading Source Files...",
+      "AI is analyzing context...",
+      "Structuring Test JSON...",
+    ];
+    const progInt = setInterval(() => {
+      step = (step + 1) % messages.length;
+      pMsg.innerText = messages[step];
+    }, 2000);
 
     try {
       const response = await fetch(`${BASE_URL}/generate-preview`, {
@@ -254,35 +295,71 @@ document
       });
       if (!response.ok) throw new Error(await response.text());
 
-      currentAiData = await response.json(); // Save data globally!
-      renderPaperPreview(currentAiData);
+      currentAiData = await response.json();
 
-      // Switch UI State
+      // Switch to Preview UI
       document.getElementById("inputState").classList.add("hidden");
       document.getElementById("previewState").classList.remove("hidden");
       document.getElementById("rightPanelTitle").innerText =
-        "Review & Refine Test";
+        "Review & Edit Test Paper";
       document.getElementById("rightPanelBadge").innerText = "Interactive Mode";
+
+      renderA4Paper(currentAiData);
     } catch (error) {
       console.error(error);
-      alert("Error generating preview: " + error.message);
+      alert("Error: " + error.message);
     } finally {
+      clearInterval(progInt);
       btn.disabled = false;
-      btn.innerHTML = '<i class="fa-solid fa-eye"></i> Generate Test Preview';
+      btn.innerHTML =
+        '<i class="fa-solid fa-eye"></i> <span>Generate True A4 Preview</span>';
       pContainer.classList.add("hidden");
     }
   });
 
 // ==========================================
-// STEP 2: DOWNLOAD (FAST EXPORT)
+// LIVE AI EDITOR (REFINE PREVIEW)
 // ==========================================
-async function downloadDocument(isPdf) {
-  if (!currentAiData)
-    return alert("No test data found. Generate preview first.");
+document.getElementById("aiRefineBtn").addEventListener("click", async () => {
+  const promptInput = document.getElementById("aiRefinePrompt");
+  const prompt = promptInput.value.trim();
+  if (!prompt) return alert("Please type an instruction first!");
 
-  const btnId = isPdf ? "downloadPdfBtn" : "downloadWordBtn";
-  const btn = document.getElementById(btnId);
-  const originalText = btn.innerHTML;
+  const btn = document.getElementById("aiRefineBtn");
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Updating...';
+
+  document.getElementById("paperContent").innerHTML = "";
+  document.getElementById("paperLoader").classList.remove("hidden");
+
+  const fd = new FormData();
+  fd.append("ai_data_json", JSON.stringify(currentAiData));
+  fd.append("refine_prompt", prompt);
+
+  try {
+    const response = await fetch(`${BASE_URL}/refine-preview`, {
+      method: "POST",
+      body: fd,
+    });
+    if (!response.ok) throw new Error(await response.text());
+    currentAiData = await response.json();
+    renderA4Paper(currentAiData);
+    promptInput.value = ""; // clear input
+  } catch (error) {
+    alert("Failed to refine: " + error.message);
+    renderA4Paper(currentAiData); // restore old view
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Update';
+  }
+});
+
+// ==========================================
+// STEP 2: INSTANT DOWNLOADS
+// ==========================================
+async function downloadWordDocument() {
+  if (!currentAiData) return;
+  const btn = document.getElementById("downloadWordBtn");
   btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
   btn.disabled = true;
 
@@ -297,32 +374,32 @@ async function downloadDocument(isPdf) {
   );
   fd.append("syllabus", document.getElementById("syllabus").value);
   fd.append("template_style", document.getElementById("templateStyle").value);
-  if (document.getElementById("examPattern").value === "board") {
-    fd.append("long_q_marks", document.getElementById("longMarks").value);
-  } else {
-    fd.append("long_q_marks", "5");
-  }
+  fd.append(
+    "long_q_marks",
+    document.getElementById("examPattern").value === "board"
+      ? document.getElementById("longMarks").value
+      : "5",
+  );
   fd.append("generate_answer_key", "no");
-
-  // MAGIC TRICK: Send the JSON string back so backend doesn't call AI again!
   fd.append("ai_data_json", JSON.stringify(currentAiData));
 
   try {
-    const endpoint = isPdf
-      ? `${BASE_URL}/generate-pdf`
-      : `${BASE_URL}/generate-word`;
-    const response = await fetch(endpoint, { method: "POST", body: fd });
+    const response = await fetch(`${BASE_URL}/generate-word`, {
+      method: "POST",
+      body: fd,
+    });
     if (!response.ok) throw new Error(await response.text());
-
     const blob = await response.blob();
-    const cleanStr = (str) => str.replace(/[\\/:*?"<>|]/g, "-");
-    const ext = isPdf ? "pdf" : "docx";
-    const filename = `${cleanStr(document.getElementById("className").value)}_${cleanStr(document.getElementById("subject").value)}.${ext}`;
-
+    const cls = document
+      .getElementById("className")
+      .value.replace(/[\\/:*?"<>|]/g, "-");
+    const sub = document
+      .getElementById("subject")
+      .value.replace(/[\\/:*?"<>|]/g, "-");
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = filename;
+    a.download = `${cls}_${sub}.docx`;
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -330,17 +407,51 @@ async function downloadDocument(isPdf) {
   } catch (error) {
     alert("Download failed: " + error.message);
   } finally {
-    btn.innerHTML = originalText;
+    btn.innerHTML = '<i class="fa-solid fa-file-word"></i> Download Word';
     btn.disabled = false;
   }
 }
 
+// 🔥 INSTANT PDF FIX USING HTML2PDF.JS 🔥
+function downloadPdfDocument() {
+  if (!currentAiData) return;
+  const btn = document.getElementById("downloadPdfBtn");
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving PDF...';
+  btn.disabled = true;
+
+  const element = document.getElementById("a4Paper");
+  const cls = document
+    .getElementById("className")
+    .value.replace(/[\\/:*?"<>|]/g, "-");
+  const sub = document
+    .getElementById("subject")
+    .value.replace(/[\\/:*?"<>|]/g, "-");
+
+  const opt = {
+    margin: 0.2, // Tiny margin so A4 design fits perfectly
+    filename: `${cls}_${sub}.pdf`,
+    image: { type: "jpeg", quality: 0.98 },
+    html2canvas: { scale: 2, useCORS: true },
+    jsPDF: { unit: "in", format: "a4", orientation: "portrait" },
+  };
+
+  // Magic line that fixes your PDF Render crash!
+  html2pdf()
+    .set(opt)
+    .from(element)
+    .save()
+    .then(() => {
+      btn.innerHTML = '<i class="fa-solid fa-file-pdf"></i> Instant PDF Export';
+      btn.disabled = false;
+    });
+}
+
 document
   .getElementById("downloadWordBtn")
-  .addEventListener("click", () => downloadDocument(false));
+  .addEventListener("click", downloadWordDocument);
 document
   .getElementById("downloadPdfBtn")
-  .addEventListener("click", () => downloadDocument(true));
+  .addEventListener("click", downloadPdfDocument);
 
 // BACK BUTTON
 document.getElementById("backToEditBtn").addEventListener("click", () => {
@@ -349,14 +460,4 @@ document.getElementById("backToEditBtn").addEventListener("click", () => {
   document.getElementById("rightPanelTitle").innerText =
     "Source Material & AI Magic";
   document.getElementById("rightPanelBadge").innerText = "Text, PDFs & Images";
-});
-
-// AI REFINE BUTTON (Placeholder for now)
-document.getElementById("aiRefineBtn").addEventListener("click", () => {
-  const prompt = document.getElementById("aiRefinePrompt").value;
-  if (!prompt) return alert("Please type an instruction first!");
-  alert(
-    "Interactive AI Refinement will be enabled in the next update! \nYour prompt: " +
-      prompt,
-  );
 });

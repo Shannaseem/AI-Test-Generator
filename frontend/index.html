@@ -19,6 +19,9 @@
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
     />
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
@@ -35,8 +38,8 @@
             </div>
           </div>
           <div class="status-area" id="networkStatus">
-            <span class="status-pulse" id="networkDot"></span>
-            <span id="networkText">System Online</span>
+            <span class="status-pulse" id="networkDot"></span
+            ><span id="networkText">System Online</span>
           </div>
         </div>
       </header>
@@ -60,10 +63,9 @@
                     type="text"
                     id="academyName"
                     required
-                    placeholder="e.g. ABC Academy"
+                    placeholder="e.g. Paragon Academy"
                   />
                 </div>
-
                 <div class="input-group">
                   <label>Subject <span class="req">*</span></label>
                   <input
@@ -82,7 +84,6 @@
                     placeholder="e.g. Inter Part 1"
                   />
                 </div>
-
                 <div class="input-group">
                   <label>Test Date <span class="req">*</span></label>
                   <input type="date" id="testDate" required />
@@ -97,7 +98,6 @@
                     placeholder="e.g. 60"
                   />
                 </div>
-
                 <div class="input-group full">
                   <label>Syllabus / Chapter <span class="req">*</span></label>
                   <input
@@ -107,7 +107,6 @@
                     placeholder="e.g. Chapter 1 & 2"
                   />
                 </div>
-
                 <div class="input-group">
                   <label>Document Style <span class="req">*</span></label>
                   <div class="select-wrapper">
@@ -118,7 +117,6 @@
                     <i class="fa-solid fa-chevron-down select-icon"></i>
                   </div>
                 </div>
-
                 <div class="input-group">
                   <label>Language <span class="req">*</span></label>
                   <div class="select-wrapper">
@@ -165,7 +163,6 @@
                       <i class="fa-solid fa-chevron-down select-icon"></i>
                     </div>
                   </div>
-
                   <div class="input-group">
                     <label>Total Short Qs <span class="req">*</span></label>
                     <input
@@ -184,7 +181,6 @@
                       placeholder="e.g. 5"
                     />
                   </div>
-
                   <div class="input-group">
                     <label>Total Long Qs <span class="req">*</span></label>
                     <input
@@ -203,7 +199,6 @@
                       placeholder="e.g. 2"
                     />
                   </div>
-
                   <div class="input-group full">
                     <label>Marks per Long Q <span class="req">*</span></label>
                     <input
@@ -242,18 +237,15 @@
                     class="magic-box-textarea custom-scrollbar"
                     placeholder="✨ AI Command (Optional): Tell AI exactly how you want the test..."
                   ></textarea>
-
                   <textarea
                     id="bookText"
                     class="custom-scrollbar"
                     placeholder="Type or paste syllabus text here...&#10;Or drag and drop PDFs / press Ctrl+V to paste Images directly."
                   ></textarea>
-
                   <div
                     id="previewContainer"
                     class="file-previews custom-scrollbar hidden"
                   ></div>
-
                   <div class="smart-box-footer">
                     <button
                       type="button"
@@ -279,22 +271,13 @@
                   <div id="progressContainer" class="progress-box hidden">
                     <div class="progress-labels">
                       <span id="progressText" class="progress-status"
-                        >Analyzing material...</span
-                      >
-                      <span id="progressPercent" class="progress-value"
-                        >0%</span
+                        >Initializing AI Engine...</span
                       >
                     </div>
                     <div class="progress-track">
                       <div id="progressBar" class="progress-fill"></div>
                     </div>
                   </div>
-
-                  <div id="statusArea" class="hidden status-notification">
-                    <i class="fa-solid fa-circle-info status-icon"></i>
-                    <span id="statusMessage">Ready to generate.</span>
-                  </div>
-
                   <div class="btn-row">
                     <button
                       type="submit"
@@ -303,7 +286,7 @@
                       style="width: 100%"
                     >
                       <i class="fa-solid fa-eye"></i>
-                      <span>Generate Test Preview</span>
+                      <span>Generate True A4 Preview</span>
                     </button>
                   </div>
                 </div>
@@ -323,24 +306,26 @@
                   <button type="button" id="backToEditBtn" class="back-btn">
                     <i class="fa-solid fa-arrow-left"></i> Back to Edit
                   </button>
-                  <span class="preview-hint"
-                    >Review your paper before downloading</span
-                  >
+                  <span class="preview-hint">Live AI Preview</span>
                 </div>
 
-                <div
-                  class="paper-preview custom-scrollbar"
-                  id="paperPreviewContent"
-                >
-                  <div class="skeleton-loader">
-                    <div
-                      class="skeleton-line"
-                      style="width: 60%; height: 24px; margin: 0 auto 20px auto"
-                    ></div>
-                    <div class="skeleton-line" style="width: 100%"></div>
-                    <div class="skeleton-line" style="width: 90%"></div>
-                    <div class="skeleton-line" style="width: 95%"></div>
-                    <div class="skeleton-line" style="width: 80%"></div>
+                <div class="paper-preview-wrapper custom-scrollbar">
+                  <div id="a4Paper" class="a4-paper">
+                    <div class="skeleton-loader" id="paperLoader">
+                      <div
+                        class="skeleton-line"
+                        style="
+                          width: 60%;
+                          height: 24px;
+                          margin: 0 auto 20px auto;
+                        "
+                      ></div>
+                      <div class="skeleton-line" style="width: 100%"></div>
+                      <div class="skeleton-line" style="width: 90%"></div>
+                      <div class="skeleton-line" style="width: 95%"></div>
+                      <div class="skeleton-line" style="width: 80%"></div>
+                    </div>
+                    <div id="paperContent"></div>
                   </div>
                 </div>
 
@@ -348,7 +333,7 @@
                   <input
                     type="text"
                     id="aiRefinePrompt"
-                    placeholder="E.g., Change MCQ #3, or make Short Questions harder..."
+                    placeholder="E.g., Change MCQ #3 to something harder..."
                   />
                   <button type="button" id="aiRefineBtn">
                     <i class="fa-solid fa-wand-magic-sparkles"></i> Update
@@ -368,7 +353,7 @@
                     id="downloadPdfBtn"
                     class="generate-btn pdf-btn"
                   >
-                    <i class="fa-solid fa-file-pdf"></i> Download PDF
+                    <i class="fa-solid fa-file-pdf"></i> Instant PDF Export
                   </button>
                 </div>
               </div>

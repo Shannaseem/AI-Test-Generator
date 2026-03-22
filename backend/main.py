@@ -2,10 +2,8 @@ from fastapi import FastAPI, Form, File, UploadFile, HTTPException, Request
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Optional, List
-from ai_service import extract_test_data
+from ai_service import extract_test_data, refine_test_data
 from doc_generator import generate_word_file
-import os
-import subprocess
 import traceback
 import json
 
@@ -32,7 +30,7 @@ async def global_exception_handler(request: Request, exc: Exception):
     )
 
 # ==========================================
-# STEP 1: PREVIEW ENDPOINT (Runs AI only)
+# STEP 1: PREVIEW ENDPOINT (Runs AI Extraction)
 # ==========================================
 @app.post("/generate-preview")
 async def generate_preview_endpoint(
@@ -47,7 +45,7 @@ async def generate_preview_endpoint(
     text: Optional[str] = Form(""),
     files: List[UploadFile] = File([]),
 ):
-    print(f"\n--- AI PREVIEW REQUEST | Pattern: {exam_pattern} | Groups: {short_groups} ---")
+    print(f"\n--- AI PREVIEW REQUEST | Pattern: {exam_pattern} ---")
     
     files_data = []
     if files:
@@ -71,27 +69,32 @@ async def generate_preview_endpoint(
         raise HTTPException(status_code=500, detail=str(e))
 
 # ==========================================
-# STEP 2: DOWNLOAD ENDPOINTS (Instant File Generation)
+# STEP 1.5: REFINE PREVIEW ENDPOINT (AI Editor)
+# ==========================================
+@app.post("/refine-preview")
+async def refine_preview_endpoint(
+    ai_data_json: str = Form(...),
+    refine_prompt: str = Form(...)
+):
+    print(f"\n--- AI REFINE REQUEST | Prompt: {refine_prompt} ---")
+    try:
+        updated_data = refine_test_data(ai_data_json, refine_prompt)
+        print("✅ Preview Refined Successfully.")
+        return JSONResponse(content=updated_data)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+# ==========================================
+# STEP 2: DOWNLOAD ENDPOINT (Instant Word)
 # ==========================================
 @app.post("/generate-word")
 async def generate_word_endpoint(
-    academy_name: str = Form(...),
-    subject: str = Form(...),
-    class_name: str = Form(...),
-    test_date: str = Form(...),
-    time_allowed: str = Form(...),
-    syllabus: str = Form(...),
-    long_q_marks: str = Form(...),
-    template_style: str = Form("table"),
-    short_total: str = Form("8"),
-    short_attempt: str = Form("5"),
-    exam_pattern: str = Form("chapter"),
-    short_groups: str = Form("1"),
-    long_total: str = Form("3"),
-    long_attempt: str = Form("2"),
-    bilingual: str = Form("no"),
-    generate_answer_key: str = Form("no"),
-    ai_data_json: str = Form(...) # Frontend sends the JSON string back!
+    academy_name: str = Form(...), subject: str = Form(...), class_name: str = Form(...),
+    test_date: str = Form(...), time_allowed: str = Form(...), syllabus: str = Form(...),
+    long_q_marks: str = Form(...), template_style: str = Form("table"), short_total: str = Form("8"),
+    short_attempt: str = Form("5"), exam_pattern: str = Form("chapter"), short_groups: str = Form("1"),
+    long_total: str = Form("3"), long_attempt: str = Form("2"), bilingual: str = Form("no"),
+    generate_answer_key: str = Form("no"), ai_data_json: str = Form(...)
 ):
     print(f"\n--- INSTANT DOCX REQUEST: {academy_name} ---")
     ai_data = json.loads(ai_data_json)
@@ -112,43 +115,3 @@ async def generate_word_endpoint(
         output_file, media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         filename=dynamic_name
     )
-
-@app.post("/generate-pdf")
-async def generate_pdf_endpoint(
-    academy_name: str = Form(...), subject: str = Form(...), class_name: str = Form(...),
-    test_date: str = Form(...), time_allowed: str = Form(...), syllabus: str = Form(...),
-    long_q_marks: str = Form(...), template_style: str = Form("table"), short_total: str = Form("8"),
-    short_attempt: str = Form("5"), exam_pattern: str = Form("chapter"), short_groups: str = Form("1"),
-    long_total: str = Form("3"), long_attempt: str = Form("2"), bilingual: str = Form("no"),
-    generate_answer_key: str = Form("no"), ai_data_json: str = Form(...)
-):
-    print(f"\n--- INSTANT PDF REQUEST: {academy_name} ---")
-    ai_data = json.loads(ai_data_json)
-
-    output_file = generate_word_file(
-        academy_name=academy_name, subject=subject, class_name=class_name, test_date=test_date,
-        time_allowed=time_allowed, syllabus=syllabus, long_q_marks=long_q_marks, ai_data=ai_data,
-        template_style=template_style, short_total=short_total, short_attempt=short_attempt,
-        exam_pattern=exam_pattern, short_groups=short_groups, long_total=long_total, long_attempt=long_attempt,
-        bilingual=bilingual, generate_answer_key=generate_answer_key
-    )
-    
-    pdf_output = output_file.replace(".docx", ".pdf")
-    try:
-        result = subprocess.run(
-            ["libreoffice", "--headless", "--convert-to", "pdf", "--outdir", os.path.dirname(os.path.abspath(output_file)), os.path.abspath(output_file)],
-            capture_output=True, text=True, timeout=60
-        )
-        if result.returncode != 0: raise Exception(f"LibreOffice error: {result.stderr}")
-    except FileNotFoundError:
-        try:
-            from docx2pdf import convert
-            convert(os.path.abspath(output_file), os.path.abspath(pdf_output))
-        except Exception as e2:
-            raise HTTPException(status_code=500, detail=f"PDF conversion failed. Error: {str(e2)}")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-    if not os.path.exists(pdf_output): raise HTTPException(status_code=500, detail="PDF generation failed.")
-    clean = lambda s: s.replace(" ", "_").replace("/", "_").replace("\\", "_")
-    return FileResponse(pdf_output, media_type="application/pdf", filename=f"{clean(class_name)}_{clean(subject)}.pdf")
