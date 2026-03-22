@@ -37,11 +37,23 @@ updateOnlineStatus();
 // SMART UI: EXAM PATTERN LOGIC
 // ==========================================
 document.getElementById("examPattern").addEventListener("change", function (e) {
-  const boardOptions = document.getElementById("boardExtraOptions");
+  const boardGroup = document.getElementById("boardConfigGroup");
   if (e.target.value === "board") {
-    boardOptions.classList.remove("hidden");
+    // Show detailed inputs for Board Pattern
+    boardGroup.classList.remove("hidden");
+    document.getElementById("shortTotal").required = true;
+    document.getElementById("shortAttempt").required = true;
+    document.getElementById("longTotal").required = true;
+    document.getElementById("longAttempt").required = true;
+    document.getElementById("longMarks").required = true;
   } else {
-    boardOptions.classList.add("hidden");
+    // Hide detailed inputs for Chapter Test
+    boardGroup.classList.add("hidden");
+    document.getElementById("shortTotal").required = false;
+    document.getElementById("shortAttempt").required = false;
+    document.getElementById("longTotal").required = false;
+    document.getElementById("longAttempt").required = false;
+    document.getElementById("longMarks").required = false;
   }
 });
 
@@ -228,6 +240,8 @@ function completeProgressBar(isPdf = false) {
       pFill.style.width = "0%";
       document.getElementById("bookText").value = "";
       document.getElementById("syllabus").value = "";
+      if (document.getElementById("magicPrompt"))
+        document.getElementById("magicPrompt").value = "";
       selectedFiles = [];
       renderPreviews();
     }, 2500);
@@ -243,6 +257,7 @@ function errorProgressBar(msg) {
   document.getElementById("progressText").innerHTML =
     `<span style='color:#dc2626;'>${msg}</span>`;
 }
+
 // ==========================================
 // ✅ BUILD FORM DATA
 // ==========================================
@@ -268,33 +283,40 @@ function buildFormData(exportType = "docx") {
   const examPattern = document.getElementById("examPattern").value;
   formData.append("exam_pattern", examPattern);
 
-  // Agar board hai toh extra groups bhejey ga, warna 1 group bhejey ga
+  // SMART INJECTION: If chapter test, send defaults. If board, send user inputs.
   if (examPattern === "board") {
     formData.append(
       "short_groups",
       document.getElementById("shortGroups").value,
     );
+    formData.append("short_total", document.getElementById("shortTotal").value);
+    formData.append(
+      "short_attempt",
+      document.getElementById("shortAttempt").value,
+    );
+    formData.append("long_total", document.getElementById("longTotal").value);
+    formData.append(
+      "long_attempt",
+      document.getElementById("longAttempt").value,
+    );
+    formData.append("long_q_marks", document.getElementById("longMarks").value);
   } else {
+    // Clean defaults for a Chapter / Weekly Test
     formData.append("short_groups", "1");
+    formData.append("short_total", "8");
+    formData.append("short_attempt", "5");
+    formData.append("long_total", "3");
+    formData.append("long_attempt", "2");
+    formData.append("long_q_marks", "5"); // default generic marks
   }
 
-  formData.append("short_total", document.getElementById("shortTotal").value);
-  formData.append(
-    "short_attempt",
-    document.getElementById("shortAttempt").value,
-  );
-  formData.append("long_total", document.getElementById("longTotal").value);
-  formData.append("long_attempt", document.getElementById("longAttempt").value);
-  formData.append("long_q_marks", document.getElementById("longMarks").value);
+  // Automatically pass "no" for answer key since it was removed from UI
+  formData.append("generate_answer_key", "no");
 
-  formData.append(
-    "magic_prompt",
-    document.getElementById("magicPrompt").value.trim(),
-  );
-  formData.append(
-    "generate_answer_key",
-    document.getElementById("generateAnswerKey").checked ? "yes" : "no",
-  );
+  const magicVal = document.getElementById("magicPrompt")
+    ? document.getElementById("magicPrompt").value.trim()
+    : "";
+  formData.append("magic_prompt", magicVal);
   formData.append("text", textVal);
 
   selectedFiles.forEach((file) => {
@@ -391,7 +413,7 @@ async function processTestGeneration(
     generateBtn.disabled = false;
     generatePdfBtn.disabled = false;
     generateBtn.innerHTML =
-      '<i class="fa-solid fa-wand-magic-sparkles"></i> <span>Generate Another Test</span>';
+      '<i class="fa-solid fa-wand-magic-sparkles"></i> <span>Generate Word (.docx)</span>';
     generatePdfBtn.innerHTML =
       '<i class="fa-solid fa-file-pdf"></i> <span>Export as PDF</span>';
   } catch (error) {
@@ -405,12 +427,15 @@ async function processTestGeneration(
     generateBtn.disabled = false;
     generatePdfBtn.disabled = false;
     generateBtn.innerHTML =
-      '<i class="fa-solid fa-wand-magic-sparkles"></i> <span>Generate AI Test Paper</span>';
+      '<i class="fa-solid fa-wand-magic-sparkles"></i> <span>Generate Word (.docx)</span>';
     generatePdfBtn.innerHTML =
       '<i class="fa-solid fa-file-pdf"></i> <span>Export as PDF</span>';
   }
 }
 
+// ==========================================
+// FORM SUBMIT — WORD BUTTON
+// ==========================================
 document.getElementById("testForm").addEventListener("submit", function (e) {
   e.preventDefault();
   if (!navigator.onLine) return alert("No internet connection.");
@@ -420,10 +445,21 @@ document.getElementById("testForm").addEventListener("submit", function (e) {
   processTestGeneration(buildFormData("docx"), false, false);
 });
 
+// ==========================================
+// PDF BUTTON CLICK
+// ==========================================
 document
   .getElementById("generatePdfBtn")
   .addEventListener("click", function () {
     if (!navigator.onLine) return alert("No internet connection.");
+
+    // We check form validity manually for the PDF button
+    const form = document.getElementById("testForm");
+    if (!form.checkValidity()) {
+      form.reportValidity();
+      return;
+    }
+
     const textVal = document.getElementById("bookText").value.trim();
     if (!textVal && selectedFiles.length === 0)
       return alert("⚠️ Please provide Source Material before generating!");
