@@ -14,7 +14,6 @@ function updateOnlineStatus() {
     networkText.innerText = "System Online";
     generateBtn.disabled = false;
     generatePdfBtn.disabled = false;
-    generateBtn.classList.remove("disabled-offline");
     generateBtn.innerHTML =
       '<i class="fa-solid fa-wand-magic-sparkles"></i> <span>Generate Word (.docx)</span>';
     generatePdfBtn.innerHTML =
@@ -24,7 +23,6 @@ function updateOnlineStatus() {
     networkText.innerText = "Offline - Check Internet";
     generateBtn.disabled = true;
     generatePdfBtn.disabled = true;
-    generateBtn.classList.add("disabled-offline");
     generateBtn.innerHTML =
       '<i class="fa-solid fa-wifi"></i> <span>No Internet</span>';
     generatePdfBtn.innerHTML =
@@ -34,46 +32,6 @@ function updateOnlineStatus() {
 window.addEventListener("online", updateOnlineStatus);
 window.addEventListener("offline", updateOnlineStatus);
 updateOnlineStatus();
-
-// ==========================================
-// ✅ LOGO UPLOAD LOGIC
-// ==========================================
-let selectedLogoFile = null;
-
-document.getElementById("logoInput").addEventListener("change", function (e) {
-  const file = e.target.files[0];
-  if (!file) return;
-
-  selectedLogoFile = file;
-
-  const reader = new FileReader();
-  reader.onload = function (ev) {
-    const preview = document.getElementById("logoPreview");
-    const placeholder = document.getElementById("logoPlaceholder");
-    const removeBtn = document.getElementById("removeLogoBtn");
-
-    preview.src = ev.target.result;
-    preview.classList.remove("hidden");
-    placeholder.classList.add("hidden");
-    removeBtn.classList.remove("hidden");
-  };
-  reader.readAsDataURL(file);
-});
-
-function removeLogo(e) {
-  e.stopPropagation();
-  selectedLogoFile = null;
-
-  const preview = document.getElementById("logoPreview");
-  const placeholder = document.getElementById("logoPlaceholder");
-  const removeBtn = document.getElementById("removeLogoBtn");
-
-  preview.src = "";
-  preview.classList.add("hidden");
-  placeholder.classList.remove("hidden");
-  removeBtn.classList.add("hidden");
-  document.getElementById("logoInput").value = "";
-}
 
 // ==========================================
 // FILE DRAG & DROP + CLIPBOARD PASTE
@@ -193,7 +151,7 @@ function renderPreviews() {
 }
 
 // ==========================================
-// PROGRESS BAR
+// SMART PROGRESS BAR
 // ==========================================
 let countdownInterval = null;
 let simulatedProgress = null;
@@ -211,7 +169,7 @@ function startProgressBar() {
   pMsg.innerText = "Extracting text and analyzing logic...";
 
   let progress = 0;
-  let stuckAt90Count = 0; // Yeh track karega ki 90% par kitni der ruka hai
+  let stuckAt90Count = 0;
 
   if (simulatedProgress) clearInterval(simulatedProgress);
   simulatedProgress = setInterval(() => {
@@ -222,25 +180,18 @@ function startProgressBar() {
       pFill.style.width = progress + "%";
       pText.innerText = progress + "%";
 
-      if (progress > 40 && progress <= 70) {
+      if (progress > 40 && progress <= 70)
         pMsg.innerText = "Structuring MCQ and Short Questions...";
-      }
-      if (progress > 70 && progress < 90) {
+      if (progress > 70 && progress < 90)
         pMsg.innerText = "Formatting Document Layout...";
-      }
     } else if (progress === 90) {
-      // Jab 90% par ruk jaye toh smart messages dikhayein
       stuckAt90Count++;
-      if (stuckAt90Count === 6) {
-        // Approx 5 seconds at 90%
+      if (stuckAt90Count === 6)
         pMsg.innerHTML =
           "Generating questions... AI is doing deep analysis <i class='fa-solid fa-spinner fa-spin'></i>";
-      }
-      if (stuckAt90Count === 18) {
-        // Approx 15 seconds at 90%
+      if (stuckAt90Count === 18)
         pMsg.innerHTML =
           "Almost there! Large data takes a bit longer... <i class='fa-solid fa-spinner fa-spin'></i>";
-      }
     }
   }, 800);
 }
@@ -263,7 +214,6 @@ function completeProgressBar(isPdf = false) {
       document.getElementById("progressContainer").classList.add("hidden");
       pFill.classList.remove("success-bar");
       pFill.style.width = "0%";
-
       document.getElementById("bookText").value = "";
       document.getElementById("syllabus").value = "";
       selectedFiles = [];
@@ -283,12 +233,12 @@ function errorProgressBar(msg) {
 }
 
 // ==========================================
-// ✅ BUILD FORM DATA (shared by both buttons)
+// CLEAN FORM DATA BUILDER
 // ==========================================
 function buildFormData(exportType = "docx") {
   const textVal = document.getElementById("bookText").value.trim();
-
   const formData = new FormData();
+
   formData.append("academy_name", document.getElementById("academyName").value);
   formData.append("subject", document.getElementById("subject").value);
   formData.append("class_name", document.getElementById("className").value);
@@ -299,7 +249,10 @@ function buildFormData(exportType = "docx") {
   );
   formData.append("syllabus", document.getElementById("syllabus").value);
   formData.append("bilingual", document.getElementById("bilingual").value);
-  formData.append("short_groups", document.getElementById("shortGroups").value);
+
+  // NEW EXAM PATTERN LOGIC
+  formData.append("exam_pattern", document.getElementById("examPattern").value);
+
   formData.append("short_total", document.getElementById("shortTotal").value);
   formData.append(
     "short_attempt",
@@ -307,7 +260,6 @@ function buildFormData(exportType = "docx") {
   );
   formData.append("long_total", document.getElementById("longTotal").value);
   formData.append("long_attempt", document.getElementById("longAttempt").value);
-  formData.append("long_parts", document.getElementById("longParts").value);
   formData.append("long_q_marks", document.getElementById("longMarks").value);
   formData.append(
     "template_style",
@@ -317,24 +269,12 @@ function buildFormData(exportType = "docx") {
     "magic_prompt",
     document.getElementById("magicPrompt").value.trim(),
   );
-  formData.append("text", textVal);
-
-  // ✅ Answer Key & Watermark toggles
   formData.append(
     "generate_answer_key",
     document.getElementById("generateAnswerKey").checked ? "yes" : "no",
   );
-  formData.append(
-    "add_watermark",
-    document.getElementById("addWatermark").checked ? "yes" : "no",
-  );
+  formData.append("text", textVal);
 
-  // ✅ Logo file
-  if (selectedLogoFile) {
-    formData.append("logo", selectedLogoFile);
-  }
-
-  // ✅ Source files
   selectedFiles.forEach((file) => {
     formData.append("files", file);
   });
@@ -343,7 +283,7 @@ function buildFormData(exportType = "docx") {
 }
 
 // ==========================================
-// MAIN GENERATION FUNCTION
+// MAIN GENERATION API CALL
 // ==========================================
 const BASE_URL = "https://ai-test-generator-2hsf.onrender.com";
 
@@ -357,11 +297,7 @@ async function processTestGeneration(
     ? `${BASE_URL}/generate-pdf`
     : `${BASE_URL}/generate-test`;
   const fileExt = isPdf ? "pdf" : "docx";
-  const mediType = isPdf
-    ? "application/pdf"
-    : "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 
-  // Disable both buttons
   generateBtn.disabled = true;
   generatePdfBtn.disabled = true;
 
@@ -389,7 +325,6 @@ async function processTestGeneration(
 
     if (!response.ok) {
       const errText = await response.text();
-
       if (errText.includes("RATE_LIMIT_WAIT")) {
         let waitSeconds = 45;
         const match = errText.match(/RATE_LIMIT_WAIT:(\d+)/);
@@ -403,7 +338,6 @@ async function processTestGeneration(
             `⚠️ API Limit. <b style='color:#dc2626;'>Auto-retrying in ${waitSeconds}s</b>`;
           document.getElementById("progressPercent").innerText =
             waitSeconds + "s";
-
           if (waitSeconds <= 0) {
             clearInterval(countdownInterval);
             processTestGeneration(formData, true, isPdf);
@@ -455,44 +389,21 @@ async function processTestGeneration(
   }
 }
 
-// ==========================================
-// FORM SUBMIT — WORD BUTTON
-// ==========================================
 document.getElementById("testForm").addEventListener("submit", function (e) {
   e.preventDefault();
-
-  if (!navigator.onLine) {
-    alert("Cannot generate test without an internet connection.");
-    return;
-  }
-
+  if (!navigator.onLine) return alert("No internet connection.");
   const textVal = document.getElementById("bookText").value.trim();
-  if (!textVal && selectedFiles.length === 0) {
-    alert("⚠️ Please provide Source Material before generating!");
-    return;
-  }
-
-  const formData = buildFormData("docx");
-  processTestGeneration(formData, false, false);
+  if (!textVal && selectedFiles.length === 0)
+    return alert("⚠️ Please provide Source Material before generating!");
+  processTestGeneration(buildFormData("docx"), false, false);
 });
 
-// ==========================================
-// ✅ PDF BUTTON CLICK
-// ==========================================
 document
   .getElementById("generatePdfBtn")
   .addEventListener("click", function () {
-    if (!navigator.onLine) {
-      alert("Cannot generate without an internet connection.");
-      return;
-    }
-
+    if (!navigator.onLine) return alert("No internet connection.");
     const textVal = document.getElementById("bookText").value.trim();
-    if (!textVal && selectedFiles.length === 0) {
-      alert("⚠️ Please provide Source Material before generating!");
-      return;
-    }
-
-    const formData = buildFormData("pdf");
-    processTestGeneration(formData, false, true);
+    if (!textVal && selectedFiles.length === 0)
+      return alert("⚠️ Please provide Source Material before generating!");
+    processTestGeneration(buildFormData("pdf"), false, true);
   });

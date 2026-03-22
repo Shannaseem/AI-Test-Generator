@@ -43,7 +43,6 @@
 
       <main class="main-content container">
         <form id="testForm" class="dashboard-grid">
-          <!-- ===== LEFT PANEL: SETTINGS ===== -->
           <aside class="panel settings-panel slide-up-1">
             <div class="panel-header">
               <div class="header-title">
@@ -53,7 +52,6 @@
             </div>
             <div class="panel-body custom-scrollbar">
               <div class="input-grid">
-                <!-- Academy Name -->
                 <div class="input-group full">
                   <input
                     type="text"
@@ -66,39 +64,6 @@
                   >
                 </div>
 
-                <!-- Logo Upload -->
-                <div class="input-group full logo-upload-group">
-                  <label class="logo-upload-label">
-                    <i class="fa-solid fa-image"></i> Academy Logo (Optional)
-                  </label>
-                  <div
-                    class="logo-upload-box"
-                    id="logoUploadBox"
-                    onclick="document.getElementById('logoInput').click()"
-                  >
-                    <div id="logoPlaceholder">
-                      <i class="fa-solid fa-cloud-arrow-up"></i>
-                      <span>Click to upload logo (PNG, JPG)</span>
-                    </div>
-                    <img id="logoPreview" class="hidden" alt="Logo Preview" />
-                    <button
-                      type="button"
-                      id="removeLogoBtn"
-                      class="remove-logo-btn hidden"
-                      onclick="removeLogo(event)"
-                    >
-                      <i class="fa-solid fa-times"></i> Remove
-                    </button>
-                  </div>
-                  <input
-                    type="file"
-                    id="logoInput"
-                    accept="image/png, image/jpeg, image/jpg, image/webp"
-                    class="hidden"
-                  />
-                </div>
-
-                <!-- Subject & Class -->
                 <div class="input-group">
                   <input type="text" id="subject" required placeholder=" " />
                   <label>Subject <span class="req">*</span></label>
@@ -108,7 +73,6 @@
                   <label>Class / Grade <span class="req">*</span></label>
                 </div>
 
-                <!-- Date & Time -->
                 <div class="input-group">
                   <input type="date" id="testDate" required />
                   <label class="active-label"
@@ -128,13 +92,11 @@
                   <label>Time Allowed (Min) <span class="req">*</span></label>
                 </div>
 
-                <!-- Syllabus -->
                 <div class="input-group full">
                   <input type="text" id="syllabus" required placeholder=" " />
                   <label>Syllabus / Chapter <span class="req">*</span></label>
                 </div>
 
-                <!-- Language -->
                 <div class="input-group full">
                   <div class="select-wrapper">
                     <select id="bilingual" required>
@@ -148,21 +110,26 @@
                   </div>
                 </div>
 
-                <!-- Short Q Groups -->
-                <div class="input-group full">
-                  <input
-                    type="number"
-                    id="shortGroups"
-                    min="1"
-                    required
-                    placeholder=" "
-                    value="2"
-                  />
-                  <label
-                    >Number of Short Q Groups (e.g. Q2, Q3)
-                    <span class="req">*</span></label
-                  >
+                <div
+                  class="input-group full"
+                  style="margin-top: 5px; margin-bottom: 5px"
+                >
+                  <div class="select-wrapper">
+                    <select id="examPattern" required>
+                      <option value="chapter">
+                        Chapter / Weekly Test (Single Parts)
+                      </option>
+                      <option value="board">
+                        Full Term / Board Pattern (With Part A/B)
+                      </option>
+                    </select>
+                    <label class="active-label"
+                      >Exam Pattern / Logic <span class="req">*</span></label
+                    >
+                    <i class="fa-solid fa-chevron-down select-icon"></i>
+                  </div>
                 </div>
+
                 <div class="input-group">
                   <input
                     type="number"
@@ -172,7 +139,7 @@
                     placeholder=" "
                     value="8"
                   />
-                  <label>Total Qs per Group <span class="req">*</span></label>
+                  <label>Total Short Qs <span class="req">*</span></label>
                 </div>
                 <div class="input-group">
                   <input
@@ -183,10 +150,9 @@
                     placeholder=" "
                     value="5"
                   />
-                  <label>Attempt per Group <span class="req">*</span></label>
+                  <label>Attempt Short Qs <span class="req">*</span></label>
                 </div>
 
-                <!-- Long Q -->
                 <div class="input-group">
                   <input
                     type="number"
@@ -210,21 +176,6 @@
                   <label>Attempt Long Qs <span class="req">*</span></label>
                 </div>
 
-                <!-- Long Q Format -->
-                <div class="input-group full">
-                  <div class="select-wrapper">
-                    <select id="longParts" required>
-                      <option value="no">No Parts (Single Question)</option>
-                      <option value="yes">Yes (Divide into Part A & B)</option>
-                    </select>
-                    <label class="active-label"
-                      >Long Q Format <span class="req">*</span></label
-                    >
-                    <i class="fa-solid fa-chevron-down select-icon"></i>
-                  </div>
-                </div>
-
-                <!-- Marks & Style -->
                 <div class="input-group">
                   <input
                     type="text"
@@ -242,18 +193,16 @@
                       <option value="column">Two Columns</option>
                     </select>
                     <label class="active-label"
-                      >Style <span class="req">*</span></label
+                      >Document Style <span class="req">*</span></label
                     >
                     <i class="fa-solid fa-chevron-down select-icon"></i>
                   </div>
                 </div>
 
-                <!-- ✅ TOGGLE FEATURES -->
-                <div class="input-group full toggles-group">
-                  <label class="section-label">
-                    <i class="fa-solid fa-sliders"></i> Extra Features
-                  </label>
-
+                <div
+                  class="input-group full toggles-group"
+                  style="margin-top: 10px"
+                >
                   <div class="toggle-row">
                     <div class="toggle-item">
                       <label class="toggle-switch">
@@ -261,18 +210,7 @@
                         <span class="toggle-slider"></span>
                       </label>
                       <span class="toggle-label">
-                        <i class="fa-solid fa-key"></i> Auto Answer Key
-                      </span>
-                    </div>
-
-                    <div class="toggle-item">
-                      <label class="toggle-switch">
-                        <input type="checkbox" id="addWatermark" />
-                        <span class="toggle-slider"></span>
-                      </label>
-                      <span class="toggle-label">
-                        <i class="fa-solid fa-shield-halved"></i> Anti-Copy
-                        Watermark
+                        <i class="fa-solid fa-key"></i> Include Auto Answer Key
                       </span>
                     </div>
                   </div>
@@ -281,7 +219,6 @@
             </div>
           </aside>
 
-          <!-- ===== RIGHT PANEL: CONTENT ===== -->
           <section class="panel content-panel slide-up-2">
             <div class="panel-header">
               <div class="header-title">
@@ -292,22 +229,18 @@
             </div>
 
             <div class="panel-body smart-input-container">
-              <div class="smart-input-box" id="dropZone">
-                <textarea
-                  id="magicPrompt"
-                  class="custom-scrollbar"
-                  placeholder="✨ Magic Box (Optional): Tell AI exactly how you want the test..."
-                  style="
-                    border-bottom: 2px dashed var(--border-light);
-                    padding-bottom: 10px;
-                    background: #fffcf0;
-                  "
-                ></textarea>
+              <input
+                type="text"
+                id="magicPrompt"
+                class="sleek-magic-box"
+                placeholder="✨ Magic Box: Tell AI exactly what you want... (Optional)"
+              />
 
+              <div class="smart-input-box" id="dropZone">
                 <textarea
                   id="bookText"
                   class="custom-scrollbar"
-                  placeholder="Type or paste syllabus text here...&#10;Or drag and drop PDFs / press Ctrl+V to paste Images directly."
+                  placeholder="Type or paste syllabus text here...&#10;&#10;Or drag and drop PDFs / press Ctrl+V to paste Images directly."
                 ></textarea>
 
                 <div
@@ -354,7 +287,6 @@
                   <span id="statusMessage">Ready to generate.</span>
                 </div>
 
-                <!-- ✅ TWO BUTTONS: WORD + PDF -->
                 <div class="btn-row">
                   <button type="submit" id="generateBtn" class="generate-btn">
                     <i class="fa-solid fa-wand-magic-sparkles"></i>

@@ -329,104 +329,18 @@ body {
   pointer-events: none;
 }
 
-/* ✅ LOGO UPLOAD BOX */
-.logo-upload-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.logo-upload-label {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--text-sub);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.logo-upload-box {
-  position: relative;
-  width: 100%;
-  height: 80px;
-  border: 2px dashed var(--border-light);
-  border-radius: 12px;
-  background: #f8fafc;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: var(--transition);
-  overflow: hidden;
-}
-.logo-upload-box:hover {
-  border-color: var(--accent-blue);
-  background: #eff6ff;
-}
-#logoPlaceholder {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  color: var(--text-sub);
-  font-size: 12px;
-  font-weight: 500;
-}
-#logoPlaceholder i {
-  font-size: 20px;
-  color: var(--accent-blue);
-}
-#logoPreview {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  padding: 6px;
-}
-.remove-logo-btn {
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  background: var(--error);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  padding: 4px 8px;
-  font-size: 11px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: var(--transition);
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-.remove-logo-btn:hover {
-  background: #b91c1c;
-}
-
-/* ✅ TOGGLE SWITCHES */
+/* ✅ TOGGLE SWITCHES (CLEANED UP) */
 .toggles-group {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-}
-.section-label {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--text-sub);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
 }
 .toggle-row {
   display: flex;
   flex-direction: column;
-  gap: 10px;
   background: #f8fafc;
   border: 1px solid var(--border-light);
   border-radius: 12px;
-  padding: 12px 15px;
+  padding: 15px 15px;
 }
 .toggle-item {
   display: flex;
@@ -439,11 +353,11 @@ body {
   color: var(--text-main);
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 .toggle-label i {
   color: var(--accent-indigo);
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .toggle-switch {
@@ -488,11 +402,33 @@ body {
   transform: translateX(18px);
 }
 
-/* --- SMART INPUT BOX --- */
+/* --- SMART INPUT BOX & SLEEK MAGIC BOX --- */
 .smart-input-container {
   gap: 15px;
   padding-right: 5px;
 }
+
+.sleek-magic-box {
+  width: 100%;
+  padding: 16px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-main);
+  background: #fffbdf;
+  border: 1px solid #fde047;
+  border-radius: 12px;
+  outline: none;
+  transition: var(--transition);
+  margin-bottom: 15px;
+}
+.sleek-magic-box:focus {
+  border-color: #facc15;
+  box-shadow: 0 0 0 4px rgba(250, 204, 21, 0.15);
+}
+.sleek-magic-box::placeholder {
+  color: #b45309;
+}
+
 .smart-input-box {
   flex: 1;
   min-height: 0;
