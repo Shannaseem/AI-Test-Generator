@@ -211,16 +211,36 @@ function startProgressBar() {
   pMsg.innerText = "Extracting text and analyzing logic...";
 
   let progress = 0;
+  let stuckAt90Count = 0; // Yeh track karega ki 90% par kitni der ruka hai
+
   if (simulatedProgress) clearInterval(simulatedProgress);
   simulatedProgress = setInterval(() => {
     if (progress < 90) {
       progress += Math.floor(Math.random() * 5) + 1;
       if (progress > 90) progress = 90;
+
       pFill.style.width = progress + "%";
       pText.innerText = progress + "%";
-      if (progress > 40)
+
+      if (progress > 40 && progress <= 70) {
         pMsg.innerText = "Structuring MCQ and Short Questions...";
-      if (progress > 70) pMsg.innerText = "Formatting Document Layout...";
+      }
+      if (progress > 70 && progress < 90) {
+        pMsg.innerText = "Formatting Document Layout...";
+      }
+    } else if (progress === 90) {
+      // Jab 90% par ruk jaye toh smart messages dikhayein
+      stuckAt90Count++;
+      if (stuckAt90Count === 6) {
+        // Approx 5 seconds at 90%
+        pMsg.innerHTML =
+          "Generating questions... AI is doing deep analysis <i class='fa-solid fa-spinner fa-spin'></i>";
+      }
+      if (stuckAt90Count === 18) {
+        // Approx 15 seconds at 90%
+        pMsg.innerHTML =
+          "Almost there! Large data takes a bit longer... <i class='fa-solid fa-spinner fa-spin'></i>";
+      }
     }
   }, 800);
 }

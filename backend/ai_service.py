@@ -1,6 +1,7 @@
 import os
 import json
 import time
+import re
 import google.generativeai as genai
 from dotenv import load_dotenv
 
@@ -45,24 +46,42 @@ def extract_test_data(text, files_data=[], short_t="8", short_a="5", long_t="3",
 
     total_short_needed = int(short_t) * short_groups_int
 
+    # --- ADVANCED BILINGUAL PROMPT LOGIC ---
     if bilingual == "yes":
         language_rule = """
 BILINGUAL MODE IS ON:
 - For every question, generate BOTH English and Urdu versions.
-- In the JSON, for short_qs and long_qs, use this format for the "text" field:
-  "text": "English question here||Urdu question here"
-- For MCQs, use this format:
-  "question": "English question||Urdu question"
-  "a": "English option A||Urdu option A"
-  "b": "English option B||Urdu option B"
-  "c": "English option C||Urdu option C"
-  "d": "English option D||Urdu option D"
-  "answer": "a"
+- In the JSON, use separate fields for English (e.g., q_en) and Urdu (e.g., q_ur).
 - Urdu MUST be written in proper Urdu script (Nastaleeq), not Roman Urdu.
-- Separator between English and Urdu is exactly two pipe characters: ||
+"""
+        json_schema = """
+{
+    "mcqs": [
+        {"q_en": "...", "q_ur": "...", "a_en": "...", "a_ur": "...", "b_en": "...", "b_ur": "...", "c_en": "...", "c_ur": "...", "d_en": "...", "d_ur": "...", "answer": "a"}
+    ],
+    "short_qs": [
+        {"text_en": "...", "text_ur": "..."}
+    ],
+    "long_qs": [
+        {"text_en": "...", "text_ur": "..."}
+    ]
+}
 """
     else:
-        language_rule = "Generate all questions in English only."
+        language_rule = "Generate all questions in English only. Do NOT include any '_ur' fields."
+        json_schema = """
+{
+    "mcqs": [
+        {"q_en": "...", "a_en": "...", "b_en": "...", "c_en": "...", "d_en": "...", "answer": "a"}
+    ],
+    "short_qs": [
+        {"text_en": "..."}
+    ],
+    "long_qs": [
+        {"text_en": "..."}
+    ]
+}
+"""
 
     prompt_instruction = f"""
 You are an expert Educational Data Extractor AI.
@@ -74,18 +93,8 @@ Analyze the attached material thoroughly and generate an exam paper based on the
 4. {user_magic}
 
 Return ONLY a valid JSON object with this exact structure (NO extra text, NO markdown formatting outside JSON):
-{{
-    "mcqs": [
-        {{"question": "...", "a": "...", "b": "...", "c": "...", "d": "...", "answer": "..."}}
-    ],
-    "short_qs": [
-        {{"text": "..."}}
-    ],
-    "long_qs": [
-        {{"text": "..."}}
-    ]
-}}
-Note: If a long question has parts, format it like "a) [text]\\nb) [text]" inside the "text" field.
+{json_schema}
+Note: If a long question has parts, format it like "a) [text]\\nb) [text]" inside the respective text field.
 """
 
     model = genai.GenerativeModel(
@@ -101,10 +110,20 @@ Note: If a long question has parts, format it like "a) [text]\\nb) [text]" insid
             try:
                 response = model.generate_content(content_list)
                 raw_text = response.text.strip()
-                if raw_text.startswith("```json"):
-                    raw_text = raw_text.replace("```json", "").replace("```", "").strip()
-                elif raw_text.startswith("```"):
-                    raw_text = raw_text.replace("```", "").strip()
+                
+                # Robust JSON Extraction using Regex
+                json_match = re.search(r'```json\s*(.*?)\s*```', raw_text, re.DOTALL)
+                if json_match:
+                    raw_text = json_match.group(1)
+                else:
+                    markdown_match = re.search(r'```\s*(.*?)\s*```', raw_text, re.DOTALL)
+                    if markdown_match:
+                        raw_text = markdown_match.group(1)
+                    else:
+                        start = raw_text.find('{')
+                        end = raw_text.rfind('}')
+                        if start != -1 and end != -1:
+                            raw_text = raw_text[start:end+1]
 
                 return json.loads(raw_text)
 
@@ -118,6 +137,7 @@ Note: If a long question has parts, format it like "a) [text]\\nb) [text]" insid
                     else:
                         raise Exception("RATE_LIMIT_WAIT:45")
                 else:
+                    print(f"JSON Parsing Error on {item_name}: {e}")
                     return {"mcqs": [], "short_qs": [], "long_qs": []}
 
         return {"mcqs": [], "short_qs": [], "long_qs": []}
@@ -144,5 +164,9 @@ Note: If a long question has parts, format it like "a) [text]\\nb) [text]" insid
             master_data["mcqs"].extend(data.get("mcqs", []))
             master_data["short_qs"].extend(data.get("short_qs", []))
             master_data["long_qs"].extend(data.get("long_qs", []))
+
+    # --- BLANK JSON FIX ---
+    if not master_data["mcqs"] and not master_data["short_qs"] and not master_data["long_qs"]:
+        raise Exception("AI could not extract any questions from the provided material. Please provide clearer text or images.")
 
     return master_data

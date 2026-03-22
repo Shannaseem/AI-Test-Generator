@@ -39,13 +39,6 @@ def add_urdu_run(paragraph, text, font_size=12, bold=False):
     return run
 
 
-def split_bilingual(text):
-    if '||' in str(text):
-        parts = str(text).split('||', 1)
-        return parts[0].strip(), parts[1].strip()
-    return str(text).strip(), None
-
-
 def remove_table_borders(table):
     tbl = table._tbl
     
@@ -219,7 +212,7 @@ def add_answer_key_page(doc, mcqs, short_qs, long_qs, bilingual="no"):
         r_sh.font.color.rgb = RGBColor(0x25, 0x63, 0xEB)
 
         for idx, sq in enumerate(short_qs, start=1):
-            sq_eng, _ = split_bilingual(sq.get('text', ''))
+            sq_eng = sq.get('text_en', '')
             p_sq = doc.add_paragraph()
             p_sq.paragraph_format.left_indent = Inches(0.25)
             p_sq.paragraph_format.first_line_indent = Inches(-0.25)
@@ -247,7 +240,7 @@ def add_answer_key_page(doc, mcqs, short_qs, long_qs, bilingual="no"):
         r_lh.font.color.rgb = RGBColor(0x25, 0x63, 0xEB)
 
         for idx, lq in enumerate(long_qs, start=1):
-            lq_eng, _ = split_bilingual(lq.get('text', ''))
+            lq_eng = lq.get('text_en', '')
             p_lq = doc.add_paragraph()
             p_lq.paragraph_format.left_indent = Inches(0.25)
             p_lq.paragraph_format.first_line_indent = Inches(-0.25)
@@ -442,7 +435,8 @@ def generate_word_file(academy_name, subject, class_name, test_date, time_allowe
         cols.set(qn('w:space'), '360')
 
         for idx, m in enumerate(mcqs, start=1):
-            q_eng, q_urdu = split_bilingual(m.get('question', ''))
+            q_eng = m.get('q_en', '')
+            q_urdu = m.get('q_ur', '')
             p_q = doc.add_paragraph()
             p_q.paragraph_format.left_indent = Inches(0.2)
             p_q.paragraph_format.first_line_indent = Inches(-0.2)
@@ -458,11 +452,12 @@ def generate_word_file(academy_name, subject, class_name, test_date, time_allowe
                 add_urdu_run(p_uq, clean_text(q_urdu), font_size=13, bold=True)
 
             opts = {
-                'A': m.get('a', ''), 'B': m.get('b', ''),
-                'C': m.get('c', ''), 'D': m.get('d', '')
+                'A': (m.get('a_en', ''), m.get('a_ur', '')),
+                'B': (m.get('b_en', ''), m.get('b_ur', '')),
+                'C': (m.get('c_en', ''), m.get('c_ur', '')),
+                'D': (m.get('d_en', ''), m.get('d_ur', ''))
             }
-            for key, val in opts.items():
-                opt_eng, opt_urdu = split_bilingual(val)
+            for key, (opt_eng, opt_urdu) in opts.items():
                 p_opt = doc.add_paragraph()
                 p_opt.paragraph_format.left_indent = Inches(0.4)
                 p_opt.paragraph_format.space_after = Pt(0)
@@ -506,11 +501,12 @@ def generate_word_file(academy_name, subject, class_name, test_date, time_allowe
             run.font.size = Pt(13)
 
         for idx, m in enumerate(mcqs, start=1):
-            q_eng, q_urdu = split_bilingual(m.get('question', ''))
-            a_eng, a_urdu = split_bilingual(m.get('a', ''))
-            b_eng, b_urdu = split_bilingual(m.get('b', ''))
-            c_eng, c_urdu = split_bilingual(m.get('c', ''))
-            d_eng, d_urdu = split_bilingual(m.get('d', ''))
+            q_eng = m.get('q_en', '')
+            q_urdu = m.get('q_ur', '')
+            a_eng, a_urdu = m.get('a_en', ''), m.get('a_ur', '')
+            b_eng, b_urdu = m.get('b_en', ''), m.get('b_ur', '')
+            c_eng, c_urdu = m.get('c_en', ''), m.get('c_ur', '')
+            d_eng, d_urdu = m.get('d_en', ''), m.get('d_ur', '')
 
             row_cells = table.add_row().cells
             for i, w in enumerate(widths):
@@ -568,7 +564,8 @@ def generate_word_file(academy_name, subject, class_name, test_date, time_allowe
         sh.add_run(f'\t{short_marks_per_group} Marks').bold = True
 
         for idx, sq in enumerate(group_qs, start=1):
-            sq_eng, sq_urdu = split_bilingual(sq.get('text', ''))
+            sq_eng = sq.get('text_en', '')
+            sq_urdu = sq.get('text_ur', '')
             if is_bilingual and sq_urdu:
                 add_side_by_side_bilingual(
                     doc, clean_text(sq_eng), clean_text(sq_urdu),
@@ -596,9 +593,10 @@ def generate_word_file(academy_name, subject, class_name, test_date, time_allowe
     lh.add_run(f'\t{long_marks} Marks').bold = True
 
     for idx, lq in enumerate(long_qs, start=1):
-        lq_eng, lq_urdu = split_bilingual(lq.get('text', ''))
-        lq_eng = clean_text(lq_eng)
-        eng_parts = lq_eng.split('\\n')
+        lq_eng = lq.get('text_en', '')
+        lq_urdu = lq.get('text_ur', '')
+        lq_eng = clean_text(lq_eng).replace('\\n', '\n')
+        eng_parts = lq_eng.split('\n')
 
         for part_idx, part in enumerate(eng_parts):
             part = part.strip()
@@ -606,7 +604,8 @@ def generate_word_file(academy_name, subject, class_name, test_date, time_allowe
                 continue
 
             if is_bilingual and lq_urdu:
-                urdu_parts = clean_text(lq_urdu).split('\\n')
+                lq_urdu_clean = clean_text(lq_urdu).replace('\\n', '\n')
+                urdu_parts = lq_urdu_clean.split('\n')
                 urdu_part = urdu_parts[part_idx].strip() if part_idx < len(urdu_parts) else ""
                 add_side_by_side_bilingual(
                     doc, part, urdu_part,
