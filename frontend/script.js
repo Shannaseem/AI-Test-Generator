@@ -1,7 +1,11 @@
 document.getElementById("testDate").valueAsDate = new Date();
 
 let selectedFiles = [];
+let currentDocxFile = null;
+let currentPdfFile = null;
 let currentAiData = null;
+
+const BASE_URL = "https://ai-test-generator-2hsf.onrender.com";
 
 // ==========================================
 // UI & NETWORK STATE
@@ -9,13 +13,13 @@ let currentAiData = null;
 function updateOnlineStatus() {
   const status = document.getElementById("networkStatus");
   const text = document.getElementById("networkText");
-  const btn = document.getElementById("generatePreviewBtn");
+  const btn = document.getElementById("generateTestBtn");
   if (navigator.onLine) {
     status.classList.remove("offline");
     text.innerText = "System Online";
     btn.disabled = false;
     btn.innerHTML =
-      '<i class="fa-solid fa-eye"></i> <span>Generate True A4 Preview</span>';
+      '<i class="fa-solid fa-wand-magic-sparkles"></i> <span>Build Interactive Test Paper</span>';
   } else {
     status.classList.add("offline");
     text.innerText = "Offline";
@@ -134,13 +138,25 @@ function renderPreviews() {
 }
 
 // ==========================================
-// FORM DATA BUILDER
+// BUILD FORM DATA
 // ==========================================
 function buildBaseFormData() {
   const fd = new FormData();
+  fd.append("academy_name", document.getElementById("academyName").value);
+  fd.append("subject", document.getElementById("subject").value);
+  fd.append("class_name", document.getElementById("className").value);
+  fd.append("test_date", document.getElementById("testDate").value);
+  fd.append(
+    "time_allowed",
+    document.getElementById("timeAllowed").value + " min",
+  );
+  fd.append("syllabus", document.getElementById("syllabus").value);
+  fd.append("template_style", document.getElementById("templateStyle").value);
+  fd.append("bilingual", document.getElementById("bilingual").value);
+  fd.append("generate_answer_key", "no");
+
   const pattern = document.getElementById("examPattern").value;
   fd.append("exam_pattern", pattern);
-  fd.append("bilingual", document.getElementById("bilingual").value);
   fd.append(
     "magic_prompt",
     document.getElementById("magicPrompt")
@@ -154,18 +170,20 @@ function buildBaseFormData() {
     fd.append("short_attempt", document.getElementById("shortAttempt").value);
     fd.append("long_total", document.getElementById("longTotal").value);
     fd.append("long_attempt", document.getElementById("longAttempt").value);
+    fd.append("long_q_marks", document.getElementById("longMarks").value);
   } else {
     fd.append("short_groups", "1");
     fd.append("short_total", "8");
     fd.append("short_attempt", "5");
     fd.append("long_total", "3");
     fd.append("long_attempt", "2");
+    fd.append("long_q_marks", "5");
   }
   return fd;
 }
 
 // ==========================================
-// RENDER TRUE A4 HTML PREVIEW
+// RENDER HTML PREVIEW (Matches Word Format)
 // ==========================================
 function renderA4Paper(data) {
   const acadName =
@@ -183,30 +201,28 @@ function renderA4Paper(data) {
   });
   const time = document.getElementById("timeAllowed").value || "60";
 
-  // Clean text function similar to Python backend
   const cT = (text) => (text ? text.replace(/^\d+[\.\)]\s*/, "").trim() : "");
 
   let html = `
-    <div class="header-info">
+    <div class="a4-header-block">
         <h1>${acadName}</h1>
-        <p>${subj} &nbsp;|&nbsp; ${cls} &nbsp;|&nbsp; ${syll}</p>
+        <p>${subj} &nbsp;&nbsp;|&nbsp;&nbsp; ${cls} &nbsp;&nbsp;|&nbsp;&nbsp; ${syll}</p>
     </div>
-    <div class="student-info">
-        <span>Name: ____________________</span>
+    <div class="a4-student-info">
+        <span>Name: ________________________</span>
         <span>Date: ${formattedDate}</span>
         <span>Time: <u>${time} Min</u></span>
-        <span>Max Marks: <u>Calculated</u></span>
+        <span>Max Marks: <u>Calc...</u></span>
     </div>
   `;
 
   if (data.mcqs && data.mcqs.length > 0) {
-    html += `<h3 style="margin-top:20px;">Multiple Choice Questions</h3><ol style="margin-left: 25px; margin-bottom: 30px;">`;
+    html += `<h3>Multiple Choice Questions</h3><ol>`;
     data.mcqs.forEach((m) => {
       let q = cT(m.q_en || m.question || "");
       if (m.q_ur)
         q += `<br><span dir="rtl" style="font-family:'Jameel Noori Nastaleeq', Arial; float:right; font-size:16px;">${m.q_ur}</span><div style="clear:both;"></div>`;
-      html += `<li style="margin-bottom: 15px; padding-left: 5px;">
-               <b>${q}</b><br>
+      html += `<li><b>${q}</b><br>
                <table style="width:100%; margin-top:5px; table-layout:fixed;">
                 <tr>
                  <td>A) ${cT(m.a_en || m.a)} ${m.a_ur ? '<span dir="rtl" style="float:right; font-family:\'Jameel Noori Nastaleeq\'">' + m.a_ur + "</span>" : ""}</td>
@@ -223,36 +239,35 @@ function renderA4Paper(data) {
   }
 
   if (data.short_qs && data.short_qs.length > 0) {
-    html += `<h3 style="margin-top:20px;">Short Questions</h3><ol style="margin-left: 25px; margin-bottom: 30px;">`;
+    html += `<h3>Short Questions</h3><ol>`;
     data.short_qs.forEach((sq) => {
       let q = cT(sq.text_en || sq.text || "");
       if (sq.text_ur)
         q += `<br><span dir="rtl" style="font-family:'Jameel Noori Nastaleeq', Arial; float:right; font-size:16px;">${sq.text_ur}</span><div style="clear:both;"></div>`;
-      html += `<li style="margin-bottom: 12px; padding-left: 5px;"><b>${q}</b></li>`;
+      html += `<li><b>${q}</b></li>`;
     });
     html += `</ol>`;
   }
 
   if (data.long_qs && data.long_qs.length > 0) {
-    html += `<h3 style="margin-top:20px;">Long Questions</h3><ol style="margin-left: 25px; margin-bottom: 20px;">`;
+    html += `<h3>Long Questions</h3><ol>`;
     data.long_qs.forEach((lq) => {
       let q = cT(lq.text_en || lq.text || "");
       q = q.replace(/\\n/g, "<br>");
       if (lq.text_ur)
         q += `<br><span dir="rtl" style="font-family:'Jameel Noori Nastaleeq', Arial; float:right; font-size:16px;">${lq.text_ur}</span><div style="clear:both;"></div>`;
-      html += `<li style="margin-bottom: 20px; padding-left: 5px;"><b>${q}</b></li>`;
+      html += `<li><b>${q}</b></li>`;
     });
     html += `</ol>`;
   }
 
-  document.getElementById("paperLoader").classList.add("hidden");
-  document.getElementById("paperContent").innerHTML = html;
+  document.getElementById("paperContentArea").innerHTML = html;
 }
 
 // ==========================================
-// STEP 1: GENERATE PREVIEW (API CALL)
+// MAIN PROCESS: GENERATE TEST
 // ==========================================
-const BASE_URL = "https://ai-test-generator-2hsf.onrender.com";
+let simProgress = null;
 
 document
   .getElementById("testForm")
@@ -267,197 +282,132 @@ document
     fd.append("text", textVal);
     selectedFiles.forEach((file) => fd.append("files", file));
 
-    const btn = document.getElementById("generatePreviewBtn");
+    const btn = document.getElementById("generateTestBtn");
     const pContainer = document.getElementById("progressContainer");
-    const pMsg = document.getElementById("progressText");
+    const pFill = document.getElementById("progressBar");
+    const pText = document.getElementById("progressText");
+    const pPercent = document.getElementById("progressPercent");
 
     btn.disabled = true;
-    btn.innerHTML =
-      '<i class="fa-solid fa-spinner fa-spin"></i> Reading files & extracting logic...';
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processing...';
     pContainer.classList.remove("hidden");
 
-    // Realistic Progress Messaging
-    let step = 0;
-    const messages = [
-      "Reading Source Files...",
-      "AI is analyzing context...",
-      "Structuring Test JSON...",
-    ];
-    const progInt = setInterval(() => {
-      step = (step + 1) % messages.length;
-      pMsg.innerText = messages[step];
-    }, 2000);
+    // Percentage Progress Bar Animation
+    let percent = 0;
+    pFill.style.width = "0%";
+    pPercent.innerText = "0%";
+    pText.innerText = "Extracting AI Data...";
+
+    simProgress = setInterval(() => {
+      if (percent < 85) {
+        percent += Math.floor(Math.random() * 4) + 1;
+        pFill.style.width = percent + "%";
+        pPercent.innerText = percent + "%";
+        if (percent > 30) pText.innerText = "Drafting Questions...";
+        if (percent > 60) pText.innerText = "Formatting Word & PDF Files...";
+      }
+    }, 600);
 
     try {
-      const response = await fetch(`${BASE_URL}/generate-preview`, {
+      const response = await fetch(`${BASE_URL}/process-test`, {
         method: "POST",
         body: fd,
       });
       if (!response.ok) throw new Error(await response.text());
 
-      currentAiData = await response.json();
+      const data = await response.json();
+      currentDocxFile = data.docx_filename;
+      currentPdfFile = data.pdf_filename;
+      currentAiData = data.ai_data;
 
-      // Switch to Preview UI
-      document.getElementById("inputState").classList.add("hidden");
-      document.getElementById("previewState").classList.remove("hidden");
-      document.getElementById("rightPanelTitle").innerText =
-        "Review & Edit Test Paper";
-      document.getElementById("rightPanelBadge").innerText = "Interactive Mode";
+      // Complete Progress
+      clearInterval(simProgress);
+      pFill.style.width = "100%";
+      pPercent.innerText = "100%";
+      pText.innerText = "Test Ready!";
 
-      renderA4Paper(currentAiData);
+      // Show Modal
+      setTimeout(() => {
+        renderA4Paper(currentAiData);
+        document.getElementById("previewModal").classList.remove("hidden");
+
+        // Reset Progress UI for next time
+        pContainer.classList.add("hidden");
+        btn.disabled = false;
+        btn.innerHTML =
+          '<i class="fa-solid fa-wand-magic-sparkles"></i> <span>Build Interactive Test Paper</span>';
+      }, 500);
     } catch (error) {
-      console.error(error);
+      clearInterval(simProgress);
+      pFill.style.background = "var(--error)";
+      pText.innerText = "Error Occurred";
       alert("Error: " + error.message);
-    } finally {
-      clearInterval(progInt);
       btn.disabled = false;
       btn.innerHTML =
-        '<i class="fa-solid fa-eye"></i> <span>Generate True A4 Preview</span>';
-      pContainer.classList.add("hidden");
+        '<i class="fa-solid fa-wand-magic-sparkles"></i> <span>Try Again</span>';
     }
   });
 
 // ==========================================
-// LIVE AI EDITOR (REFINE PREVIEW)
+// MODAL CLOSE LOGIC
 // ==========================================
-document.getElementById("aiRefineBtn").addEventListener("click", async () => {
-  const promptInput = document.getElementById("aiRefinePrompt");
-  const prompt = promptInput.value.trim();
-  if (!prompt) return alert("Please type an instruction first!");
-
-  const btn = document.getElementById("aiRefineBtn");
-  btn.disabled = true;
-  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Updating...';
-
-  document.getElementById("paperContent").innerHTML = "";
-  document.getElementById("paperLoader").classList.remove("hidden");
-
-  const fd = new FormData();
-  fd.append("ai_data_json", JSON.stringify(currentAiData));
-  fd.append("refine_prompt", prompt);
-
-  try {
-    const response = await fetch(`${BASE_URL}/refine-preview`, {
-      method: "POST",
-      body: fd,
-    });
-    if (!response.ok) throw new Error(await response.text());
-    currentAiData = await response.json();
-    renderA4Paper(currentAiData);
-    promptInput.value = ""; // clear input
-  } catch (error) {
-    alert("Failed to refine: " + error.message);
-    renderA4Paper(currentAiData); // restore old view
-  } finally {
-    btn.disabled = false;
-    btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Update';
-  }
+document.getElementById("closeModalBtn").addEventListener("click", () => {
+  document.getElementById("previewModal").classList.add("hidden");
 });
 
 // ==========================================
-// STEP 2: INSTANT DOWNLOADS
+// DOWNLOAD HANDLERS
 // ==========================================
-async function downloadWordDocument() {
-  if (!currentAiData) return;
-  const btn = document.getElementById("downloadWordBtn");
-  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving...';
-  btn.disabled = true;
-
-  const fd = buildBaseFormData();
-  fd.append("academy_name", document.getElementById("academyName").value);
-  fd.append("subject", document.getElementById("subject").value);
-  fd.append("class_name", document.getElementById("className").value);
-  fd.append("test_date", document.getElementById("testDate").value);
-  fd.append(
-    "time_allowed",
-    document.getElementById("timeAllowed").value + " min",
-  );
-  fd.append("syllabus", document.getElementById("syllabus").value);
-  fd.append("template_style", document.getElementById("templateStyle").value);
-  fd.append(
-    "long_q_marks",
-    document.getElementById("examPattern").value === "board"
-      ? document.getElementById("longMarks").value
-      : "5",
-  );
-  fd.append("generate_answer_key", "no");
-  fd.append("ai_data_json", JSON.stringify(currentAiData));
-
-  try {
-    const response = await fetch(`${BASE_URL}/generate-word`, {
-      method: "POST",
-      body: fd,
-    });
-    if (!response.ok) throw new Error(await response.text());
-    const blob = await response.blob();
-    const cls = document
-      .getElementById("className")
-      .value.replace(/[\\/:*?"<>|]/g, "-");
-    const sub = document
-      .getElementById("subject")
-      .value.replace(/[\\/:*?"<>|]/g, "-");
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${cls}_${sub}.docx`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    window.URL.revokeObjectURL(url);
-  } catch (error) {
-    alert("Download failed: " + error.message);
-  } finally {
-    btn.innerHTML = '<i class="fa-solid fa-file-word"></i> Download Word';
-    btn.disabled = false;
+async function downloadFile(filename, isPdf) {
+  if (!filename) {
+    if (isPdf) {
+      // Fallback: If backend libreoffice failed, use html2pdf!
+      alert("Server PDF conversion skipped. Generating Client-Side PDF...");
+      const element = document.getElementById("paperContentArea");
+      const cls = document
+        .getElementById("className")
+        .value.replace(/[\\/:*?"<>|]/g, "-");
+      const sub = document
+        .getElementById("subject")
+        .value.replace(/[\\/:*?"<>|]/g, "-");
+      html2pdf()
+        .set({
+          margin: 0.2,
+          filename: `${cls}_${sub}.pdf`,
+          image: { type: "jpeg", quality: 0.98 },
+          html2canvas: { scale: 2 },
+          jsPDF: { unit: "in", format: "a4", orientation: "portrait" },
+        })
+        .from(element)
+        .save();
+    }
+    return;
   }
-}
 
-// 🔥 INSTANT PDF FIX USING HTML2PDF.JS 🔥
-function downloadPdfDocument() {
-  if (!currentAiData) return;
-  const btn = document.getElementById("downloadPdfBtn");
-  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saving PDF...';
-  btn.disabled = true;
-
-  const element = document.getElementById("a4Paper");
-  const cls = document
-    .getElementById("className")
-    .value.replace(/[\\/:*?"<>|]/g, "-");
-  const sub = document
-    .getElementById("subject")
-    .value.replace(/[\\/:*?"<>|]/g, "-");
-
-  const opt = {
-    margin: 0.2, // Tiny margin so A4 design fits perfectly
-    filename: `${cls}_${sub}.pdf`,
-    image: { type: "jpeg", quality: 0.98 },
-    html2canvas: { scale: 2, useCORS: true },
-    jsPDF: { unit: "in", format: "a4", orientation: "portrait" },
-  };
-
-  // Magic line that fixes your PDF Render crash!
-  html2pdf()
-    .set(opt)
-    .from(element)
-    .save()
-    .then(() => {
-      btn.innerHTML = '<i class="fa-solid fa-file-pdf"></i> Instant PDF Export';
-      btn.disabled = false;
-    });
+  // Direct download from backend
+  const url = `${BASE_URL}/get-file/${filename}`;
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
 }
 
 document
   .getElementById("downloadWordBtn")
-  .addEventListener("click", downloadWordDocument);
+  .addEventListener("click", () => downloadFile(currentDocxFile, false));
 document
   .getElementById("downloadPdfBtn")
-  .addEventListener("click", downloadPdfDocument);
+  .addEventListener("click", () => downloadFile(currentPdfFile, true));
 
-// BACK BUTTON
-document.getElementById("backToEditBtn").addEventListener("click", () => {
-  document.getElementById("previewState").classList.add("hidden");
-  document.getElementById("inputState").classList.remove("hidden");
-  document.getElementById("rightPanelTitle").innerText =
-    "Source Material & AI Magic";
-  document.getElementById("rightPanelBadge").innerText = "Text, PDFs & Images";
+// ==========================================
+// AI REFINE BUTTON (Coming in next update)
+// ==========================================
+document.getElementById("aiRefineBtn").addEventListener("click", () => {
+  const prompt = document.getElementById("aiRefinePrompt").value;
+  if (!prompt) return alert("Please type an instruction first!");
+  alert(
+    "AI Editor is currently processing... This will update the DOCX format in the next patch!",
+  );
 });

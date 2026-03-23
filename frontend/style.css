@@ -736,3 +736,227 @@ body {
     padding: 20px;
   }
 }
+/* ==========================================
+   STATE 2: PERCENTAGE PROGRESS BAR & MODAL
+   ========================================== */
+.progress-box {
+  background: var(--panel-bg);
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border-light);
+  margin-bottom: 15px;
+}
+.progress-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: var(--accent-indigo);
+}
+.progress-track {
+  width: 100%;
+  height: 8px;
+  background: #e2e8f0;
+  border-radius: 10px;
+  overflow: hidden;
+}
+/* ✅ Real Progress Fill ✅ */
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-blue), var(--accent-indigo));
+  transition: width 0.3s ease-in-out;
+}
+
+/* Modal Styling */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(15, 23, 42, 0.6);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(5px);
+}
+.modal-content {
+  background: var(--primary-bg);
+  width: 100%;
+  max-width: 1100px; /* Wider Modal */
+  height: 90vh;
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--border-light);
+}
+.modal-header {
+  padding: 15px 25px;
+  background: var(--panel-bg);
+  border-bottom: 1px solid var(--border-light);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.modal-header h2 {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+.modal-actions {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+.preview-hint {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent-indigo);
+  background: #e0e7ff;
+  padding: 4px 10px;
+  border-radius: 12px;
+}
+.close-modal-btn {
+  background: transparent;
+  border: none;
+  font-size: 32px;
+  color: var(--text-sub);
+  cursor: pointer;
+  transition: var(--transition);
+  line-height: 1;
+  margin-top: -5px;
+}
+.close-modal-btn:hover {
+  color: var(--error);
+}
+.modal-body {
+  flex: 1;
+  padding: 30px;
+  overflow-y: auto;
+  background: #e2e8f0; /* Paper Background */
+  display: flex;
+  justify-content: center;
+}
+.modal-footer {
+  padding: 20px 25px;
+  background: var(--panel-bg);
+  border-top: 1px solid var(--border-light);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* The True Paper formatting MASTER CSS */
+.paper-formatting-master {
+  background: #ffffff;
+  width: 100%;
+  max-width: 794px; /* Pixel equivalent to A4 width at standard dpi */
+  min-height: 1123px;
+  padding: 40px 50px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  font-family: "Times New Roman", Times, serif;
+  font-size: 14px; /* Standard A4 font size */
+  color: #000;
+  line-height: 1.6;
+}
+.paper-formatting-master h1 {
+  text-align: center;
+  font-size: 26px;
+  font-weight: bold;
+  margin-bottom: 5px;
+  text-transform: uppercase;
+}
+.paper-formatting-master h3 {
+  font-weight: bold;
+  font-size: 16px;
+  margin-top: 20px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid var(--border-light);
+  padding-bottom: 5px;
+}
+.paper-formatting-master ol,
+.paper-formatting-master ul {
+  margin-left: 20px;
+  margin-bottom: 25px;
+}
+.paper-formatting-master li {
+  margin-bottom: 10px;
+}
+.paper-formatting-master p {
+  margin-bottom: 8px;
+}
+
+/* Header Info Block for A4 */
+.a4-header-block {
+  text-align: center;
+  border-bottom: 2px solid #cbd5e1;
+  padding-bottom: 15px;
+  margin-bottom: 25px;
+}
+.a4-header-block h1 {
+  margin-bottom: 2px;
+}
+.a4-header-block p {
+  font-size: 14px;
+  font-weight: bold;
+  color: #000;
+}
+.a4-student-info {
+  display: flex;
+  justify-content: space-between;
+  font-weight: bold;
+  margin-bottom: 25px;
+  border-bottom: 1px dashed #cbd5e1;
+  padding-bottom: 10px;
+  font-size: 14px;
+}
+
+/* AI Command Box in Modal Footer */
+.ai-editor-box {
+  display: flex;
+  background: #fffbeb;
+  border: 1px solid #fde047;
+  border-radius: 12px;
+  padding: 6px;
+  box-shadow: 0 4px 10px rgba(253, 224, 71, 0.15);
+  transition: var(--transition);
+}
+.ai-editor-box:focus-within {
+  border-color: #facc15;
+  box-shadow: 0 0 0 4px rgba(250, 204, 21, 0.2);
+}
+.ai-editor-box input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  padding: 10px 15px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #9a3412;
+  outline: none;
+}
+.ai-editor-box input::placeholder {
+  color: #d97706;
+}
+.ai-editor-box button {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: white;
+  border: none;
+  padding: 0 20px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: var(--transition);
+}
+.ai-editor-box button:hover:not(:disabled) {
+  transform: scale(1.02);
+  background: linear-gradient(135deg, #f59e0b, #b45309);
+}
