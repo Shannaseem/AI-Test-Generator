@@ -105,6 +105,7 @@
                     placeholder="e.g. Chapter 1 & 2"
                   />
                 </div>
+
                 <div class="input-group">
                   <label>Document Style <span class="req">*</span></label>
                   <div class="select-wrapper">
@@ -151,37 +152,14 @@
                 </div>
 
                 <div
-                  class="input-group full"
-                  style="
-                    margin-top: 10px;
-                    border-top: 1px solid var(--border-light);
-                    padding-top: 15px;
-                  "
-                >
-                  <label style="color: var(--accent-blue)"
-                    >Exam Pattern / Logic <span class="req">*</span></label
-                  >
-                  <div class="select-wrapper">
-                    <select id="examPattern" required>
-                      <option value="chapter">
-                        Chapter / Weekly Test (Standard)
-                      </option>
-                      <option value="board">
-                        Full Term / Board Pattern (Detailed)
-                      </option>
-                    </select>
-                    <i class="fa-solid fa-chevron-down select-icon"></i>
-                  </div>
-                </div>
-
-                <div
                   id="boardConfigGroup"
                   class="config-group-box full hidden"
                   style="padding: 10px; margin-bottom: 5px"
                 >
                   <div class="input-group full">
                     <label style="color: var(--accent-indigo)"
-                      >Short Q Groups (Board) <span class="req">*</span></label
+                      >Short Q Groups (Board Only)
+                      <span class="req">*</span></label
                     >
                     <div class="select-wrapper">
                       <select id="shortGroups">
@@ -250,6 +228,7 @@
               </div>
             </div>
           </aside>
+
           <section class="panel content-panel slide-up-2">
             <div class="panel-header">
               <div class="header-title">
@@ -337,7 +316,7 @@
                     style="width: 100%"
                   >
                     <i class="fa-solid fa-wand-magic-sparkles"></i>
-                    <span>Build Test Paper & Preview</span>
+                    <span>Build Interactive Test Paper</span>
                   </button>
                 </div>
               </div>
@@ -403,16 +382,21 @@
             class="hidden"
             style="width: 100%; flex: 1; border: none"
           ></iframe>
-
-          <div
-            id="htmlFallback"
-            class="hidden paper-formatting-master"
-            style="margin: 20px auto"
-          ></div>
         </div>
 
         <div class="modal-footer">
-          <div class="btn-row" style="margin-top: 12px">
+          <div class="ai-editor-box" style="margin-bottom: 12px">
+            <input
+              type="text"
+              id="aiRefinePrompt"
+              placeholder="E.g., Change MCQ #3 to something harder..."
+            />
+            <button type="button" id="aiRefineBtn">
+              <i class="fa-solid fa-wand-magic-sparkles"></i> Update Test
+            </button>
+          </div>
+
+          <div class="btn-row">
             <button type="button" id="downloadWordBtn" class="generate-btn">
               <i class="fa-solid fa-file-word"></i> Download Exact Word File
             </button>

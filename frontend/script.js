@@ -3,7 +3,6 @@ document.getElementById("testDate").valueAsDate = new Date();
 let selectedFiles = [];
 let currentDocxFile = null;
 let currentPdfFile = null;
-let currentAiData = null;
 
 const BASE_URL = "https://ai-test-generator-2hsf.onrender.com";
 
@@ -31,6 +30,7 @@ window.addEventListener("online", updateOnlineStatus);
 window.addEventListener("offline", updateOnlineStatus);
 updateOnlineStatus();
 
+// Shows/Hides only the Short Q Groups option based on Exam Pattern
 document.getElementById("examPattern").addEventListener("change", function (e) {
   const boardGroup = document.getElementById("boardConfigGroup");
   if (e.target.value === "board") {
@@ -150,13 +150,14 @@ function buildBaseFormData() {
       : "",
   );
 
+  // Set Groups based on Pattern
   if (pattern === "board") {
     fd.append("short_groups", document.getElementById("shortGroups").value);
   } else {
     fd.append("short_groups", "1");
   }
 
-  // ALWAYS APPEND THESE (No matter if Board or Chapter, because UI always shows them now)
+  // Quantities are ALWAYS sent from the UI fields now
   fd.append("short_total", document.getElementById("shortTotal").value);
   fd.append("short_attempt", document.getElementById("shortAttempt").value);
   fd.append("long_total", document.getElementById("longTotal").value);
@@ -224,7 +225,6 @@ document
       const data = await response.json();
       currentDocxFile = data.docx_filename;
       currentPdfFile = data.pdf_filename;
-      currentAiData = data.ai_data;
 
       clearInterval(simProgress);
       pFill.style.width = "100%";
@@ -261,7 +261,7 @@ function openPreviewModal(docxFilename) {
   iframe.classList.add("hidden");
   loader.classList.remove("hidden");
 
-  // Load MS Office Online Viewer for perfect formatting
+  // Live MS Word Viewer!
   const fileUrl = `${BASE_URL}/get-file/${docxFilename}`;
   const viewerUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(fileUrl)}`;
 
@@ -284,7 +284,7 @@ if (closeBtn) {
 }
 
 // ==========================================
-// DOWNLOAD HANDLERS
+// DOWNLOAD HANDLERS (Safely Checked)
 // ==========================================
 async function downloadFile(filename, isPdf) {
   if (!filename) {
@@ -314,12 +314,16 @@ if (pdfBtn)
   pdfBtn.addEventListener("click", () => downloadFile(currentPdfFile, true));
 
 // ==========================================
-// AI REFINE BUTTON
+// AI REFINE BUTTON (Safely Checked)
 // ==========================================
-document.getElementById("aiRefineBtn").addEventListener("click", () => {
-  const prompt = document.getElementById("aiRefinePrompt").value;
-  if (!prompt) return alert("Please type an instruction first!");
-  alert(
-    "AI Editor is processing your request...\n\n(This will dynamically update the DOCX in the next feature patch!)",
-  );
-});
+const refineBtn = document.getElementById("aiRefineBtn");
+if (refineBtn) {
+  refineBtn.addEventListener("click", () => {
+    const promptInput = document.getElementById("aiRefinePrompt");
+    if (!promptInput || !promptInput.value)
+      return alert("Please type an instruction first!");
+    alert(
+      "AI Editor is processing your request...\n\n(This will dynamically update the DOCX in the next feature patch!)",
+    );
+  });
+}
