@@ -455,10 +455,10 @@ pip install -r backend/requirements.txt
 
 **Muhammad Shan Naseem**
 
-_Student @ SCOCS-UET Lahore &nbsp;·&nbsp; CS Teacher (Classes 9–12) &nbsp;·&nbsp; Full-Stack Developer_
+_Student @ UET Lahore &nbsp;·&nbsp; Full-Stack Developer_
 
 [![GitHub](https://img.shields.io/badge/GitHub-Shannaseem-181717?style=flat-square&logo=github)](https://github.com/Shannaseem)
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-0A66C2?style=flat-square&logo=linkedin)](https://linkedin.com/in/shannaseem)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-shan--naseem-0A66C2?style=flat-square&logo=linkedin)](https://www.linkedin.com/in/shan-naseem/)
 
 <br>
 
