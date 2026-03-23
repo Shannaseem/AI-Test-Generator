@@ -19,9 +19,7 @@
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
     />
-
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
@@ -216,11 +214,9 @@
             <div class="panel-header">
               <div class="header-title">
                 <i class="fa-solid fa-brain header-icon"></i>
-                <h2 id="rightPanelTitle">Source Material & AI Magic</h2>
+                <h2>Source Material & AI Magic</h2>
               </div>
-              <span class="badge" id="rightPanelBadge"
-                >Text, PDFs & Images</span
-              >
+              <span class="badge">Text, PDFs & Images</span>
             </div>
 
             <div
@@ -293,6 +289,7 @@
                       ></div>
                     </div>
                   </div>
+
                   <button
                     type="submit"
                     id="generateTestBtn"
@@ -300,7 +297,7 @@
                     style="width: 100%"
                   >
                     <i class="fa-solid fa-wand-magic-sparkles"></i>
-                    <span>Build Interactive Test Paper</span>
+                    <span>Build Test Paper & Preview</span>
                   </button>
                 </div>
               </div>
@@ -319,48 +316,65 @@
         </div>
       </footer>
     </div>
-    <script src="script.js"></script>
+
     <div id="previewModal" class="modal hidden">
       <div class="modal-content slide-up-1">
         <div class="modal-header">
-          <h2>Review & Refine Test Paper</h2>
+          <h2>Review Final Test Paper</h2>
           <div class="modal-actions">
-            <span class="preview-hint"
-              >Live AI Review (Matches DOCX Format)</span
-            >
+            <span class="preview-hint">Original Document View</span>
             <button type="button" class="close-modal-btn" id="closeModalBtn">
               &times;
             </button>
           </div>
         </div>
-        <div class="modal-body custom-scrollbar">
-          <div id="paperContentArea" class="paper-formatting-master">
-            <div class="skeleton-loader">
-              <div
-                class="skeleton-line"
-                style="width: 60%; height: 24px; margin: 0 auto 20px auto"
-              ></div>
-              <div class="skeleton-line" style="width: 100%"></div>
-              <div class="skeleton-line" style="width: 90%"></div>
-              <div class="skeleton-line" style="width: 95%"></div>
-              <div class="skeleton-line" style="width: 80%"></div>
-            </div>
+
+        <div
+          class="modal-body custom-scrollbar"
+          style="
+            padding: 0;
+            background: #cbd5e1;
+            display: flex;
+            flex-direction: column;
+          "
+        >
+          <div
+            id="iframeLoader"
+            style="
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              justify-content: center;
+              height: 100%;
+              gap: 15px;
+            "
+          >
+            <i
+              class="fa-solid fa-spinner fa-spin"
+              style="font-size: 40px; color: var(--accent-blue)"
+            ></i>
+            <p style="font-weight: 600; color: #475569">
+              Rendering Original Word Document Page-by-Page...
+            </p>
           </div>
+
+          <iframe
+            id="docPreviewFrame"
+            class="hidden"
+            style="width: 100%; flex: 1; border: none"
+          ></iframe>
+
+          <div
+            id="htmlFallback"
+            class="hidden paper-formatting-master"
+            style="margin: 20px auto"
+          ></div>
         </div>
+
         <div class="modal-footer">
-          <div class="ai-editor-box">
-            <input
-              type="text"
-              id="aiRefinePrompt"
-              placeholder="E.g., Change MCQ #3 to something harder..."
-            />
-            <button type="button" id="aiRefineBtn">
-              <i class="fa-solid fa-magic"></i> Update
-            </button>
-          </div>
           <div class="btn-row" style="margin-top: 12px">
             <button type="button" id="downloadWordBtn" class="generate-btn">
-              <i class="fa-solid fa-file-word"></i> Download Word
+              <i class="fa-solid fa-file-word"></i> Download Exact Word File
             </button>
             <button
               type="button"
@@ -373,5 +387,7 @@
         </div>
       </div>
     </div>
+
+    <script src="script.js"></script>
   </body>
 </html>

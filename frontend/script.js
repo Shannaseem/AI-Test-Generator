@@ -3,7 +3,6 @@ document.getElementById("testDate").valueAsDate = new Date();
 let selectedFiles = [];
 let currentDocxFile = null;
 let currentPdfFile = null;
-let currentAiData = null;
 
 const BASE_URL = "https://ai-test-generator-2hsf.onrender.com";
 
@@ -19,7 +18,7 @@ function updateOnlineStatus() {
     text.innerText = "System Online";
     btn.disabled = false;
     btn.innerHTML =
-      '<i class="fa-solid fa-wand-magic-sparkles"></i> <span>Build Interactive Test Paper</span>';
+      '<i class="fa-solid fa-wand-magic-sparkles"></i> <span>Build Test Paper & Preview</span>';
   } else {
     status.classList.add("offline");
     text.innerText = "Offline";
@@ -138,7 +137,7 @@ function renderPreviews() {
 }
 
 // ==========================================
-// BUILD FORM DATA
+// FORM DATA BUILDER
 // ==========================================
 function buildBaseFormData() {
   const fd = new FormData();
@@ -183,88 +182,6 @@ function buildBaseFormData() {
 }
 
 // ==========================================
-// RENDER HTML PREVIEW (Matches Word Format)
-// ==========================================
-function renderA4Paper(data) {
-  const acadName =
-    document.getElementById("academyName").value.toUpperCase() ||
-    "ACADEMY NAME";
-  const subj = document.getElementById("subject").value || "Subject";
-  const cls = document.getElementById("className").value || "Class";
-  const syll = document.getElementById("syllabus").value || "Syllabus";
-
-  const dateObj = new Date(document.getElementById("testDate").value);
-  const formattedDate = dateObj.toLocaleDateString("en-GB", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
-  const time = document.getElementById("timeAllowed").value || "60";
-
-  const cT = (text) => (text ? text.replace(/^\d+[\.\)]\s*/, "").trim() : "");
-
-  let html = `
-    <div class="a4-header-block">
-        <h1>${acadName}</h1>
-        <p>${subj} &nbsp;&nbsp;|&nbsp;&nbsp; ${cls} &nbsp;&nbsp;|&nbsp;&nbsp; ${syll}</p>
-    </div>
-    <div class="a4-student-info">
-        <span>Name: ________________________</span>
-        <span>Date: ${formattedDate}</span>
-        <span>Time: <u>${time} Min</u></span>
-        <span>Max Marks: <u>Calc...</u></span>
-    </div>
-  `;
-
-  if (data.mcqs && data.mcqs.length > 0) {
-    html += `<h3>Multiple Choice Questions</h3><ol>`;
-    data.mcqs.forEach((m) => {
-      let q = cT(m.q_en || m.question || "");
-      if (m.q_ur)
-        q += `<br><span dir="rtl" style="font-family:'Jameel Noori Nastaleeq', Arial; float:right; font-size:16px;">${m.q_ur}</span><div style="clear:both;"></div>`;
-      html += `<li><b>${q}</b><br>
-               <table style="width:100%; margin-top:5px; table-layout:fixed;">
-                <tr>
-                 <td>A) ${cT(m.a_en || m.a)} ${m.a_ur ? '<span dir="rtl" style="float:right; font-family:\'Jameel Noori Nastaleeq\'">' + m.a_ur + "</span>" : ""}</td>
-                 <td>B) ${cT(m.b_en || m.b)} ${m.b_ur ? '<span dir="rtl" style="float:right; font-family:\'Jameel Noori Nastaleeq\'">' + m.b_ur + "</span>" : ""}</td>
-                </tr>
-                <tr>
-                 <td>C) ${cT(m.c_en || m.c)} ${m.c_ur ? '<span dir="rtl" style="float:right; font-family:\'Jameel Noori Nastaleeq\'">' + m.c_ur + "</span>" : ""}</td>
-                 <td>D) ${cT(m.d_en || m.d)} ${m.d_ur ? '<span dir="rtl" style="float:right; font-family:\'Jameel Noori Nastaleeq\'">' + m.d_ur + "</span>" : ""}</td>
-                </tr>
-               </table>
-               </li>`;
-    });
-    html += `</ol>`;
-  }
-
-  if (data.short_qs && data.short_qs.length > 0) {
-    html += `<h3>Short Questions</h3><ol>`;
-    data.short_qs.forEach((sq) => {
-      let q = cT(sq.text_en || sq.text || "");
-      if (sq.text_ur)
-        q += `<br><span dir="rtl" style="font-family:'Jameel Noori Nastaleeq', Arial; float:right; font-size:16px;">${sq.text_ur}</span><div style="clear:both;"></div>`;
-      html += `<li><b>${q}</b></li>`;
-    });
-    html += `</ol>`;
-  }
-
-  if (data.long_qs && data.long_qs.length > 0) {
-    html += `<h3>Long Questions</h3><ol>`;
-    data.long_qs.forEach((lq) => {
-      let q = cT(lq.text_en || lq.text || "");
-      q = q.replace(/\\n/g, "<br>");
-      if (lq.text_ur)
-        q += `<br><span dir="rtl" style="font-family:'Jameel Noori Nastaleeq', Arial; float:right; font-size:16px;">${lq.text_ur}</span><div style="clear:both;"></div>`;
-      html += `<li><b>${q}</b></li>`;
-    });
-    html += `</ol>`;
-  }
-
-  document.getElementById("paperContentArea").innerHTML = html;
-}
-
-// ==========================================
 // MAIN PROCESS: GENERATE TEST
 // ==========================================
 let simProgress = null;
@@ -289,22 +206,27 @@ document
     const pPercent = document.getElementById("progressPercent");
 
     btn.disabled = true;
-    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processing...';
+    btn.innerHTML =
+      '<i class="fa-solid fa-spinner fa-spin"></i> Analyzing & Processing...';
     pContainer.classList.remove("hidden");
 
-    // Percentage Progress Bar Animation
+    // ✅ PERCENTAGE PROGRESS BAR LOGIC
     let percent = 0;
     pFill.style.width = "0%";
     pPercent.innerText = "0%";
     pText.innerText = "Extracting AI Data...";
 
     simProgress = setInterval(() => {
-      if (percent < 85) {
-        percent += Math.floor(Math.random() * 4) + 1;
+      if (percent < 90) {
+        percent += Math.floor(Math.random() * 4) + 1; // 1 to 4 percent at a time
+        if (percent > 90) percent = 90; // Stop at 90 until fetch completes
+
         pFill.style.width = percent + "%";
         pPercent.innerText = percent + "%";
-        if (percent > 30) pText.innerText = "Drafting Questions...";
-        if (percent > 60) pText.innerText = "Formatting Word & PDF Files...";
+
+        // Update text based on progress
+        if (percent > 30) pText.innerText = "Drafting Questions & Sections...";
+        if (percent > 65) pText.innerText = "Formatting MS Word Document...";
       }
     }, 600);
 
@@ -317,26 +239,24 @@ document
 
       const data = await response.json();
       currentDocxFile = data.docx_filename;
-      currentPdfFile = data.pdf_filename;
-      currentAiData = data.ai_data;
+      currentPdfFile = data.pdf_filename; // Might be null if LibreOffice is missing on Render
 
-      // Complete Progress
+      // Complete Progress to 100%
       clearInterval(simProgress);
       pFill.style.width = "100%";
       pPercent.innerText = "100%";
-      pText.innerText = "Test Ready!";
+      pText.innerText = "Test Paper Ready!";
 
-      // Show Modal
+      // Open Preview Modal
       setTimeout(() => {
-        renderA4Paper(currentAiData);
-        document.getElementById("previewModal").classList.remove("hidden");
+        openPreviewModal(currentDocxFile, data.ai_data);
 
-        // Reset Progress UI for next time
+        // Reset UI for next time
         pContainer.classList.add("hidden");
         btn.disabled = false;
         btn.innerHTML =
           '<i class="fa-solid fa-wand-magic-sparkles"></i> <span>Build Interactive Test Paper</span>';
-      }, 500);
+      }, 800);
     } catch (error) {
       clearInterval(simProgress);
       pFill.style.background = "var(--error)";
@@ -349,11 +269,47 @@ document
   });
 
 // ==========================================
-// MODAL CLOSE LOGIC
+// PREVIEW MODAL LOGIC (MS Word Viewer)
 // ==========================================
-document.getElementById("closeModalBtn").addEventListener("click", () => {
-  document.getElementById("previewModal").classList.add("hidden");
-});
+function openPreviewModal(docxFilename, aiDataFallback) {
+  const modal = document.getElementById("previewModal");
+  const iframe = document.getElementById("docPreviewFrame");
+  const loader = document.getElementById("iframeLoader");
+  const fallbackBox = document.getElementById("htmlFallback");
+
+  modal.classList.remove("hidden");
+  iframe.classList.add("hidden");
+  fallbackBox.classList.add("hidden");
+  loader.classList.remove("hidden");
+
+  // Using MS Office Online Viewer for PERFECT page-by-page rendering!
+  // The docx file must be publicly accessible on your Render URL.
+  const fileUrl = `${BASE_URL}/get-file/${docxFilename}`;
+  const viewerUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(fileUrl)}`;
+
+  iframe.src = viewerUrl;
+
+  iframe.onload = function () {
+    setTimeout(() => {
+      loader.classList.add("hidden");
+      iframe.classList.remove("hidden");
+    }, 1500); // Give MS Viewer a second to render
+  };
+
+  // If iframe fails or user wants instant HTML fallback (optional)
+  // We can populate htmlFallback with the JSON data, but iframe is the primary.
+}
+
+// Ensure the Close button ID matches exactly!
+const closeBtn = document.getElementById("closeModalBtn");
+if (closeBtn) {
+  closeBtn.addEventListener("click", () => {
+    document.getElementById("previewModal").classList.add("hidden");
+    document.getElementById("docPreviewFrame").src = ""; // Stop loading if closed
+  });
+} else {
+  console.error("Critical: closeModalBtn not found in HTML!");
+}
 
 // ==========================================
 // DOWNLOAD HANDLERS
@@ -361,25 +317,10 @@ document.getElementById("closeModalBtn").addEventListener("click", () => {
 async function downloadFile(filename, isPdf) {
   if (!filename) {
     if (isPdf) {
-      // Fallback: If backend libreoffice failed, use html2pdf!
-      alert("Server PDF conversion skipped. Generating Client-Side PDF...");
-      const element = document.getElementById("paperContentArea");
-      const cls = document
-        .getElementById("className")
-        .value.replace(/[\\/:*?"<>|]/g, "-");
-      const sub = document
-        .getElementById("subject")
-        .value.replace(/[\\/:*?"<>|]/g, "-");
-      html2pdf()
-        .set({
-          margin: 0.2,
-          filename: `${cls}_${sub}.pdf`,
-          image: { type: "jpeg", quality: 0.98 },
-          html2canvas: { scale: 2 },
-          jsPDF: { unit: "in", format: "a4", orientation: "portrait" },
-        })
-        .from(element)
-        .save();
+      // If backend LibreOffice failed (Render limit), fallback to html2pdf or alert user
+      alert(
+        "⚠️ Server PDF engine busy. \n\nPRO TIP: Click 'Download Exact Word File' and use MS Word to 'Save As PDF' for perfect formatting!",
+      );
     }
     return;
   }
@@ -394,20 +335,12 @@ async function downloadFile(filename, isPdf) {
   a.remove();
 }
 
-document
-  .getElementById("downloadWordBtn")
-  .addEventListener("click", () => downloadFile(currentDocxFile, false));
-document
-  .getElementById("downloadPdfBtn")
-  .addEventListener("click", () => downloadFile(currentPdfFile, true));
+const wordBtn = document.getElementById("downloadWordBtn");
+if (wordBtn) {
+  wordBtn.addEventListener("click", () => downloadFile(currentDocxFile, false));
+}
 
-// ==========================================
-// AI REFINE BUTTON (Coming in next update)
-// ==========================================
-document.getElementById("aiRefineBtn").addEventListener("click", () => {
-  const prompt = document.getElementById("aiRefinePrompt").value;
-  if (!prompt) return alert("Please type an instruction first!");
-  alert(
-    "AI Editor is currently processing... This will update the DOCX format in the next patch!",
-  );
-});
+const pdfBtn = document.getElementById("downloadPdfBtn");
+if (pdfBtn) {
+  pdfBtn.addEventListener("click", () => downloadFile(currentPdfFile, true));
+}
