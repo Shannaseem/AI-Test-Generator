@@ -47,7 +47,7 @@
 
 Making a professional exam paper manually takes hours. **AI Test Generator PRO eliminates all of that.**
 
-| Before ❌                    | After ✅                             |
+| Before ❌                    | After ✅                            |
 | ---------------------------- | ------------------------------------ |
 | Read syllabus manually       | Upload any file format               |
 | Write every question by hand | AI extracts & categorizes everything |
@@ -82,11 +82,11 @@ The AI reads your content deeply and produces fully organized exam questions —
 
 ```
  ┌──────────────────────────────┬──────────────────────────────┐
- │ English (Left)               │             (دائیں) اردو     │
+ │ English (Left)               │             (دائیں) اردو        │
  ├──────────────────────────────┼──────────────────────────────┤
- │ Q1. What is photosynthesis?  │  س١. ضیاء ترکیب کیا ہے؟    │
- │ a) A process of respiration  │  الف) سانس کا عمل            │
- │ b) Food making by plants     │  ب) پودوں کا کھانا بنانا    │
+ │ Q1. What is photosynthesis?  │  س١. ضیاء ترکیب کیا ہے؟         │
+ │ a) A process of respiration  │  الف) سانس کا عمل               │
+ │ b) Food making by plants     │  ب) پودوں کا کھانا بنانا            │
  └──────────────────────────────┴──────────────────────────────┘
             Zero-border invisible table — always aligned
 ```
@@ -114,7 +114,7 @@ Don't like a question? Fix it live without regenerating the entire paper.
                           ↓  instantly  ↓
  ┌────────────────────────────────────────────────────────┐
  │  Q1. A 5kg object accelerates at 3m/s². Force = ?      │
- │      a) 8N    b) 15N ✓    c) 2N    d) 10N             │
+ │      a) 8N    b) 15N ✓    c) 2N    d) 10N             |
  └────────────────────────────────────────────────────────┘
 ```
 
@@ -455,10 +455,10 @@ pip install -r backend/requirements.txt
 
 **Muhammad Shan Naseem**
 
-_Student @ SCOCS-UET Lahore &nbsp;·&nbsp; CS Teacher (Classes 9–12) &nbsp;·&nbsp; Full-Stack Developer_
+_Student @ UET Lahore  &nbsp;·&nbsp; Full-Stack Developer_
 
 [![GitHub](https://img.shields.io/badge/GitHub-Shannaseem-181717?style=flat-square&logo=github)](https://github.com/Shannaseem)
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-0A66C2?style=flat-square&logo=linkedin)](https://linkedin.com/in/shannaseem)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-shan-naseem/-0A66C2?style=flat-square&logo=linkedin)](https://www.linkedin.com/in/shan-naseem/)
 
 <br>
 
