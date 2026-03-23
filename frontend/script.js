@@ -2,8 +2,13 @@ document.getElementById("testDate").valueAsDate = new Date();
 
 let selectedFiles = [];
 let currentDocxFile = null;
+let currentAiData = null;
+
 const BASE_URL = "https://ai-test-generator-2hsf.onrender.com";
 
+// ==========================================
+// UI & NETWORK STATE
+// ==========================================
 function updateOnlineStatus() {
   const status = document.getElementById("networkStatus");
   const text = document.getElementById("networkText");
@@ -25,6 +30,7 @@ window.addEventListener("online", updateOnlineStatus);
 window.addEventListener("offline", updateOnlineStatus);
 updateOnlineStatus();
 
+// Shows/Hides only the Short Q Groups option based on Exam Pattern
 document.getElementById("examPattern").addEventListener("change", function (e) {
   const boardGroup = document.getElementById("boardConfigGroup");
   if (e.target.value === "board") {
@@ -34,6 +40,9 @@ document.getElementById("examPattern").addEventListener("change", function (e) {
   }
 });
 
+// ==========================================
+// DRAG & DROP FILES
+// ==========================================
 const dropZone = document.getElementById("dropZone");
 const fileInput = document.getElementById("fileInput");
 const previewContainer = document.getElementById("previewContainer");
@@ -46,7 +55,7 @@ document.addEventListener("paste", (e) => {
       items[index].kind === "file" &&
       items[index].type.startsWith("image/")
     ) {
-      if (selectedFiles.length >= 10) return alert("Max 10 files.");
+      if (selectedFiles.length >= 10) return alert("Max 10 files allowed.");
       selectedFiles.push(
         new File([items[index].getAsFile()], `pasted_${Date.now()}.png`, {
           type: items[index].type,
@@ -100,6 +109,7 @@ function renderPreviews() {
       removeFile(index);
     };
     item.appendChild(btn);
+
     if (file.type.startsWith("image/")) {
       const img = document.createElement("img");
       img.src = URL.createObjectURL(file);
@@ -113,6 +123,9 @@ function renderPreviews() {
   });
 }
 
+// ==========================================
+// FORM DATA BUILDER
+// ==========================================
 function buildBaseFormData() {
   const fd = new FormData();
   fd.append("academy_name", document.getElementById("academyName").value);
@@ -143,6 +156,7 @@ function buildBaseFormData() {
     fd.append("short_groups", "1");
   }
 
+  // ALL Quantities are now sent exactly as user inputs them
   fd.append("short_total", document.getElementById("shortTotal").value);
   fd.append("short_attempt", document.getElementById("shortAttempt").value);
   fd.append("long_total", document.getElementById("longTotal").value);
@@ -152,6 +166,9 @@ function buildBaseFormData() {
   return fd;
 }
 
+// ==========================================
+// MAIN PROCESS: GENERATE TEST
+// ==========================================
 let simProgress = null;
 
 document
@@ -178,23 +195,29 @@ document
       '<i class="fa-solid fa-spinner fa-spin"></i> Analyzing & Processing...';
     pContainer.classList.remove("hidden");
 
+    // SMOOTH PERCENTAGE PROGRESS BAR
     let percent = 0;
     pFill.style.width = "0%";
     pPercent.innerText = "0%";
     pText.innerText = "Extracting AI Data...";
+    pFill.style.transition = "width 0.4s ease";
 
     simProgress = setInterval(() => {
-      if (percent < 90) {
-        percent += Math.floor(Math.random() * 4) + 1;
-        if (percent > 90) percent = 90;
+      let increment = 0;
+      if (percent < 40) increment = Math.floor(Math.random() * 5) + 2;
+      else if (percent < 80) increment = Math.floor(Math.random() * 3) + 1;
+      else if (percent < 96) increment = 1;
 
-        pFill.style.width = percent + "%";
-        pPercent.innerText = percent + "%";
+      percent += increment;
+      if (percent > 96) percent = 96;
 
-        if (percent > 30) pText.innerText = "Drafting Questions & Sections...";
-        if (percent > 65) pText.innerText = "Formatting MS Word Document...";
-      }
-    }, 600);
+      pFill.style.width = percent + "%";
+      pPercent.innerText = percent + "%";
+
+      if (percent > 30) pText.innerText = "Drafting Questions & Sections...";
+      if (percent > 65) pText.innerText = "Formatting MS Word Document...";
+      if (percent > 85) pText.innerText = "Finalizing Layout...";
+    }, 500);
 
     try {
       const response = await fetch(`${BASE_URL}/process-test`, {
@@ -205,6 +228,7 @@ document
 
       const data = await response.json();
       currentDocxFile = data.docx_filename;
+      currentAiData = data.ai_data;
 
       clearInterval(simProgress);
       pFill.style.width = "100%";
@@ -229,6 +253,9 @@ document
     }
   });
 
+// ==========================================
+// PREVIEW MODAL LOGIC (MS Word Viewer)
+// ==========================================
 function openPreviewModal(docxFilename) {
   const modal = document.getElementById("previewModal");
   const iframe = document.getElementById("docPreviewFrame");
@@ -238,7 +265,7 @@ function openPreviewModal(docxFilename) {
   iframe.classList.add("hidden");
   loader.classList.remove("hidden");
 
-  // 🔥 DOUBLE CACHE BUSTER: ?t=Date.now() forces Microsoft to fetch the NEW file!
+  // DOUBLE CACHE BUSTER: Forces Microsoft Viewer to load the newest file
   const fileUrl = `${BASE_URL}/get-file/${docxFilename}`;
   const viewerUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(fileUrl)}&t=${Date.now()}`;
 
@@ -260,6 +287,9 @@ if (closeBtn) {
   });
 }
 
+// ==========================================
+// DOWNLOAD WORD FILE
+// ==========================================
 const wordBtn = document.getElementById("downloadWordBtn");
 if (wordBtn) {
   wordBtn.addEventListener("click", () => {
@@ -274,14 +304,64 @@ if (wordBtn) {
   });
 }
 
+// ==========================================
+// AI REFINE BUTTON (WORKING & CONNECTED)
+// ==========================================
 const refineBtn = document.getElementById("aiRefineBtn");
 if (refineBtn) {
-  refineBtn.addEventListener("click", () => {
+  refineBtn.addEventListener("click", async () => {
     const promptInput = document.getElementById("aiRefinePrompt");
-    if (!promptInput || !promptInput.value)
-      return alert("Please type an instruction first!");
-    alert(
-      "AI Editor is processing your request...\n\n(This will dynamically update the DOCX in the next feature patch!)",
-    );
+    const refinePrompt = promptInput.value.trim();
+    if (!refinePrompt) return alert("Please type an instruction first!");
+
+    // Setup Loading State in Modal
+    refineBtn.disabled = true;
+    refineBtn.innerHTML =
+      '<i class="fa-solid fa-spinner fa-spin"></i> Updating...';
+
+    const iframe = document.getElementById("docPreviewFrame");
+    const loader = document.getElementById("iframeLoader");
+    iframe.classList.add("hidden");
+    loader.classList.remove("hidden");
+    document.querySelector("#iframeLoader p").innerText =
+      "AI is updating the document... Please wait.";
+
+    // Re-build Data to regenerate DOCX
+    const fd = buildBaseFormData();
+    fd.append("ai_data_json", JSON.stringify(currentAiData));
+    fd.append("refine_prompt", refinePrompt);
+
+    try {
+      const response = await fetch(`${BASE_URL}/refine-test`, {
+        method: "POST",
+        body: fd,
+      });
+      if (!response.ok) throw new Error(await response.text());
+
+      const data = await response.json();
+      currentDocxFile = data.docx_filename;
+      currentAiData = data.ai_data;
+
+      // Reload MS Word Preview instantly with new file
+      const fileUrl = `${BASE_URL}/get-file/${currentDocxFile}`;
+      iframe.src = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(fileUrl)}&t=${Date.now()}`;
+
+      promptInput.value = ""; // clear input
+    } catch (error) {
+      alert("Failed to update test: " + error.message);
+      iframe.classList.remove("hidden");
+      loader.classList.add("hidden");
+    } finally {
+      refineBtn.disabled = false;
+      refineBtn.innerHTML =
+        '<i class="fa-solid fa-wand-magic-sparkles"></i> Update Test';
+
+      iframe.onload = function () {
+        setTimeout(() => {
+          loader.classList.add("hidden");
+          iframe.classList.remove("hidden");
+        }, 1500);
+      };
+    }
   });
 }

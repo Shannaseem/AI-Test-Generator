@@ -2,7 +2,7 @@ from fastapi import FastAPI, Form, File, UploadFile, HTTPException, Request
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Optional, List
-from ai_service import extract_test_data
+from ai_service import extract_test_data, refine_test_data
 from doc_generator import generate_word_file
 import os
 import traceback
@@ -50,8 +50,7 @@ async def build_test_process(
             long_t=long_total, long_a=long_attempt, exam_pattern=exam_pattern, short_groups=short_groups,
             magic_prompt=magic_prompt, bilingual=bilingual
         )
-        print("✅ Step 1: AI JSON extracted.")
-
+        
         docx_path = generate_word_file(
             academy_name=academy_name, subject=subject, class_name=class_name, test_date=test_date,
             time_allowed=time_allowed, syllabus=syllabus, long_q_marks=long_q_marks, ai_data=ai_data,
@@ -59,8 +58,6 @@ async def build_test_process(
             exam_pattern=exam_pattern, short_groups=short_groups, long_total=long_total, long_attempt=long_attempt,
             bilingual=bilingual, generate_answer_key=generate_answer_key
         )
-        print(f"✅ Step 2: DOCX generated.")
-
         return docx_path, ai_data
 
     except Exception as e:
@@ -82,7 +79,6 @@ async def process_test_endpoint(
         long_total, long_attempt, bilingual, magic_prompt, generate_answer_key, text, files
     )
     
-    # 🔥 CACHE BUSTER: Unique filename every time so Preview NEVER shows old file
     clean = lambda s: s.replace(" ", "_").replace("/", "_").replace("\\", "_")
     timestamp = int(time.time())
     unique_name = f"{clean(class_name)}_{clean(subject)}_{timestamp}.docx"
@@ -90,10 +86,44 @@ async def process_test_endpoint(
     new_path = os.path.join(os.path.dirname(os.path.abspath(docx_path)), unique_name)
     os.rename(docx_path, new_path)
 
-    return JSONResponse(content={
-        "docx_filename": unique_name,
-        "ai_data": ai_data
-    })
+    return JSONResponse(content={"docx_filename": unique_name, "ai_data": ai_data})
+
+# ==========================================
+# NEW: REFINE/UPDATE TEST ENDPOINT
+# ==========================================
+@app.post("/refine-test")
+async def refine_test_endpoint(
+    academy_name: str = Form(...), subject: str = Form(...), class_name: str = Form(...),
+    test_date: str = Form(...), time_allowed: str = Form(...), syllabus: str = Form(...),
+    long_q_marks: str = Form(...), template_style: str = Form("table"), short_total: str = Form(...),
+    short_attempt: str = Form(...), exam_pattern: str = Form("chapter"), short_groups: str = Form("1"),
+    long_total: str = Form(...), long_attempt: str = Form(...), bilingual: str = Form("no"),
+    generate_answer_key: str = Form("no"), ai_data_json: str = Form(...), refine_prompt: str = Form(...)
+):
+    try:
+        print(f"\n--- Refining Test... Prompt: {refine_prompt} ---")
+        # 1. Update JSON using AI
+        updated_ai_data = refine_test_data(ai_data_json, refine_prompt)
+        
+        # 2. Regenerate DOCX with updated data
+        docx_path = generate_word_file(
+            academy_name=academy_name, subject=subject, class_name=class_name, test_date=test_date,
+            time_allowed=time_allowed, syllabus=syllabus, long_q_marks=long_q_marks, ai_data=updated_ai_data,
+            template_style=template_style, short_total=short_total, short_attempt=short_attempt,
+            exam_pattern=exam_pattern, short_groups=short_groups, long_total=long_total, long_attempt=long_attempt,
+            bilingual=bilingual, generate_answer_key=generate_answer_key
+        )
+        
+        clean = lambda s: s.replace(" ", "_").replace("/", "_").replace("\\", "_")
+        timestamp = int(time.time())
+        unique_name = f"{clean(class_name)}_{clean(subject)}_Updated_{timestamp}.docx"
+        
+        new_path = os.path.join(os.path.dirname(os.path.abspath(docx_path)), unique_name)
+        os.rename(docx_path, new_path)
+
+        return JSONResponse(content={"docx_filename": unique_name, "ai_data": updated_ai_data})
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/get-file/{filename}")
 async def get_file(filename: str):
