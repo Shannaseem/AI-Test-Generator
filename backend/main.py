@@ -13,6 +13,14 @@ import shutil
 
 app = FastAPI()
 
+
+# --- YEH NAYI 3 LINES ADD KAREIN (For Render Health Check) ---
+@app.get("/")
+def read_root():
+    return {"status": "ok", "message": "API is running perfectly!"}
+# -------------------------------------------------------------
+
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"], allow_credentials=False, allow_methods=["*"],
