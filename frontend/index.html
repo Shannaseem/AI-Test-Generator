@@ -150,9 +150,39 @@
                   </div>
                 </div>
 
-                <div id="boardConfigGroup" class="config-group-box full hidden">
+                <div
+                  class="input-group full"
+                  style="
+                    margin-top: 10px;
+                    border-top: 1px solid var(--border-light);
+                    padding-top: 15px;
+                  "
+                >
+                  <label style="color: var(--accent-blue)"
+                    >Exam Pattern / Logic <span class="req">*</span></label
+                  >
+                  <div class="select-wrapper">
+                    <select id="examPattern" required>
+                      <option value="chapter">
+                        Chapter / Weekly Test (Standard)
+                      </option>
+                      <option value="board">
+                        Full Term / Board Pattern (Detailed)
+                      </option>
+                    </select>
+                    <i class="fa-solid fa-chevron-down select-icon"></i>
+                  </div>
+                </div>
+
+                <div
+                  id="boardConfigGroup"
+                  class="config-group-box full hidden"
+                  style="padding: 10px; margin-bottom: 5px"
+                >
                   <div class="input-group full">
-                    <label>Short Q Groups <span class="req">*</span></label>
+                    <label style="color: var(--accent-indigo)"
+                      >Short Q Groups (Board) <span class="req">*</span></label
+                    >
                     <div class="select-wrapper">
                       <select id="shortGroups">
                         <option value="2">2 Groups (e.g. Q2, Q3)</option>
@@ -161,55 +191,65 @@
                       <i class="fa-solid fa-chevron-down select-icon"></i>
                     </div>
                   </div>
-                  <div class="input-group">
-                    <label>Total Short Qs <span class="req">*</span></label>
-                    <input
-                      type="number"
-                      id="shortTotal"
-                      min="1"
-                      placeholder="e.g. 8"
-                    />
-                  </div>
-                  <div class="input-group">
-                    <label>Attempt Short Qs <span class="req">*</span></label>
-                    <input
-                      type="number"
-                      id="shortAttempt"
-                      min="1"
-                      placeholder="e.g. 5"
-                    />
-                  </div>
-                  <div class="input-group">
-                    <label>Total Long Qs <span class="req">*</span></label>
-                    <input
-                      type="number"
-                      id="longTotal"
-                      min="1"
-                      placeholder="e.g. 3"
-                    />
-                  </div>
-                  <div class="input-group">
-                    <label>Attempt Long Qs <span class="req">*</span></label>
-                    <input
-                      type="number"
-                      id="longAttempt"
-                      min="1"
-                      placeholder="e.g. 2"
-                    />
-                  </div>
-                  <div class="input-group full">
-                    <label>Marks per Long Q <span class="req">*</span></label>
-                    <input
-                      type="text"
-                      id="longMarks"
-                      placeholder="e.g. 9 or 4+5"
-                    />
-                  </div>
+                </div>
+
+                <div class="input-group">
+                  <label>Total Short Qs <span class="req">*</span></label>
+                  <input
+                    type="number"
+                    id="shortTotal"
+                    min="1"
+                    required
+                    placeholder="e.g. 8"
+                    value="8"
+                  />
+                </div>
+                <div class="input-group">
+                  <label>Attempt Short Qs <span class="req">*</span></label>
+                  <input
+                    type="number"
+                    id="shortAttempt"
+                    min="1"
+                    required
+                    placeholder="e.g. 5"
+                    value="5"
+                  />
+                </div>
+                <div class="input-group">
+                  <label>Total Long Qs <span class="req">*</span></label>
+                  <input
+                    type="number"
+                    id="longTotal"
+                    min="1"
+                    required
+                    placeholder="e.g. 3"
+                    value="3"
+                  />
+                </div>
+                <div class="input-group">
+                  <label>Attempt Long Qs <span class="req">*</span></label>
+                  <input
+                    type="number"
+                    id="longAttempt"
+                    min="1"
+                    required
+                    placeholder="e.g. 2"
+                    value="2"
+                  />
+                </div>
+                <div class="input-group full">
+                  <label>Marks per Long Q <span class="req">*</span></label>
+                  <input
+                    type="text"
+                    id="longMarks"
+                    required
+                    placeholder="e.g. 9 or 4+5"
+                    value="5"
+                  />
                 </div>
               </div>
             </div>
           </aside>
-
           <section class="panel content-panel slide-up-2">
             <div class="panel-header">
               <div class="header-title">

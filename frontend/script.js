@@ -3,6 +3,7 @@ document.getElementById("testDate").valueAsDate = new Date();
 let selectedFiles = [];
 let currentDocxFile = null;
 let currentPdfFile = null;
+let currentAiData = null;
 
 const BASE_URL = "https://ai-test-generator-2hsf.onrender.com";
 
@@ -18,7 +19,7 @@ function updateOnlineStatus() {
     text.innerText = "System Online";
     btn.disabled = false;
     btn.innerHTML =
-      '<i class="fa-solid fa-wand-magic-sparkles"></i> <span>Build Test Paper & Preview</span>';
+      '<i class="fa-solid fa-wand-magic-sparkles"></i> <span>Build Interactive Test Paper</span>';
   } else {
     status.classList.add("offline");
     text.innerText = "Offline";
@@ -34,22 +35,8 @@ document.getElementById("examPattern").addEventListener("change", function (e) {
   const boardGroup = document.getElementById("boardConfigGroup");
   if (e.target.value === "board") {
     boardGroup.classList.remove("hidden");
-    [
-      "shortTotal",
-      "shortAttempt",
-      "longTotal",
-      "longAttempt",
-      "longMarks",
-    ].forEach((id) => (document.getElementById(id).required = true));
   } else {
     boardGroup.classList.add("hidden");
-    [
-      "shortTotal",
-      "shortAttempt",
-      "longTotal",
-      "longAttempt",
-      "longMarks",
-    ].forEach((id) => (document.getElementById(id).required = false));
   }
 });
 
@@ -165,19 +152,17 @@ function buildBaseFormData() {
 
   if (pattern === "board") {
     fd.append("short_groups", document.getElementById("shortGroups").value);
-    fd.append("short_total", document.getElementById("shortTotal").value);
-    fd.append("short_attempt", document.getElementById("shortAttempt").value);
-    fd.append("long_total", document.getElementById("longTotal").value);
-    fd.append("long_attempt", document.getElementById("longAttempt").value);
-    fd.append("long_q_marks", document.getElementById("longMarks").value);
   } else {
     fd.append("short_groups", "1");
-    fd.append("short_total", "8");
-    fd.append("short_attempt", "5");
-    fd.append("long_total", "3");
-    fd.append("long_attempt", "2");
-    fd.append("long_q_marks", "5");
   }
+
+  // ALWAYS APPEND THESE (No matter if Board or Chapter, because UI always shows them now)
+  fd.append("short_total", document.getElementById("shortTotal").value);
+  fd.append("short_attempt", document.getElementById("shortAttempt").value);
+  fd.append("long_total", document.getElementById("longTotal").value);
+  fd.append("long_attempt", document.getElementById("longAttempt").value);
+  fd.append("long_q_marks", document.getElementById("longMarks").value);
+
   return fd;
 }
 
@@ -210,7 +195,7 @@ document
       '<i class="fa-solid fa-spinner fa-spin"></i> Analyzing & Processing...';
     pContainer.classList.remove("hidden");
 
-    // ✅ PERCENTAGE PROGRESS BAR LOGIC
+    // PERCENTAGE PROGRESS BAR
     let percent = 0;
     pFill.style.width = "0%";
     pPercent.innerText = "0%";
@@ -218,13 +203,12 @@ document
 
     simProgress = setInterval(() => {
       if (percent < 90) {
-        percent += Math.floor(Math.random() * 4) + 1; // 1 to 4 percent at a time
-        if (percent > 90) percent = 90; // Stop at 90 until fetch completes
+        percent += Math.floor(Math.random() * 4) + 1;
+        if (percent > 90) percent = 90;
 
         pFill.style.width = percent + "%";
         pPercent.innerText = percent + "%";
 
-        // Update text based on progress
         if (percent > 30) pText.innerText = "Drafting Questions & Sections...";
         if (percent > 65) pText.innerText = "Formatting MS Word Document...";
       }
@@ -239,19 +223,16 @@ document
 
       const data = await response.json();
       currentDocxFile = data.docx_filename;
-      currentPdfFile = data.pdf_filename; // Might be null if LibreOffice is missing on Render
+      currentPdfFile = data.pdf_filename;
+      currentAiData = data.ai_data;
 
-      // Complete Progress to 100%
       clearInterval(simProgress);
       pFill.style.width = "100%";
       pPercent.innerText = "100%";
       pText.innerText = "Test Paper Ready!";
 
-      // Open Preview Modal
       setTimeout(() => {
-        openPreviewModal(currentDocxFile, data.ai_data);
-
-        // Reset UI for next time
+        openPreviewModal(currentDocxFile);
         pContainer.classList.add("hidden");
         btn.disabled = false;
         btn.innerHTML =
@@ -271,19 +252,16 @@ document
 // ==========================================
 // PREVIEW MODAL LOGIC (MS Word Viewer)
 // ==========================================
-function openPreviewModal(docxFilename, aiDataFallback) {
+function openPreviewModal(docxFilename) {
   const modal = document.getElementById("previewModal");
   const iframe = document.getElementById("docPreviewFrame");
   const loader = document.getElementById("iframeLoader");
-  const fallbackBox = document.getElementById("htmlFallback");
 
   modal.classList.remove("hidden");
   iframe.classList.add("hidden");
-  fallbackBox.classList.add("hidden");
   loader.classList.remove("hidden");
 
-  // Using MS Office Online Viewer for PERFECT page-by-page rendering!
-  // The docx file must be publicly accessible on your Render URL.
+  // Load MS Office Online Viewer for perfect formatting
   const fileUrl = `${BASE_URL}/get-file/${docxFilename}`;
   const viewerUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(fileUrl)}`;
 
@@ -293,22 +271,16 @@ function openPreviewModal(docxFilename, aiDataFallback) {
     setTimeout(() => {
       loader.classList.add("hidden");
       iframe.classList.remove("hidden");
-    }, 1500); // Give MS Viewer a second to render
+    }, 1500);
   };
-
-  // If iframe fails or user wants instant HTML fallback (optional)
-  // We can populate htmlFallback with the JSON data, but iframe is the primary.
 }
 
-// Ensure the Close button ID matches exactly!
 const closeBtn = document.getElementById("closeModalBtn");
 if (closeBtn) {
   closeBtn.addEventListener("click", () => {
     document.getElementById("previewModal").classList.add("hidden");
-    document.getElementById("docPreviewFrame").src = ""; // Stop loading if closed
+    document.getElementById("docPreviewFrame").src = "";
   });
-} else {
-  console.error("Critical: closeModalBtn not found in HTML!");
 }
 
 // ==========================================
@@ -317,7 +289,6 @@ if (closeBtn) {
 async function downloadFile(filename, isPdf) {
   if (!filename) {
     if (isPdf) {
-      // If backend LibreOffice failed (Render limit), fallback to html2pdf or alert user
       alert(
         "⚠️ Server PDF engine busy. \n\nPRO TIP: Click 'Download Exact Word File' and use MS Word to 'Save As PDF' for perfect formatting!",
       );
@@ -325,7 +296,6 @@ async function downloadFile(filename, isPdf) {
     return;
   }
 
-  // Direct download from backend
   const url = `${BASE_URL}/get-file/${filename}`;
   const a = document.createElement("a");
   a.href = url;
@@ -336,11 +306,20 @@ async function downloadFile(filename, isPdf) {
 }
 
 const wordBtn = document.getElementById("downloadWordBtn");
-if (wordBtn) {
+if (wordBtn)
   wordBtn.addEventListener("click", () => downloadFile(currentDocxFile, false));
-}
 
 const pdfBtn = document.getElementById("downloadPdfBtn");
-if (pdfBtn) {
+if (pdfBtn)
   pdfBtn.addEventListener("click", () => downloadFile(currentPdfFile, true));
-}
+
+// ==========================================
+// AI REFINE BUTTON
+// ==========================================
+document.getElementById("aiRefineBtn").addEventListener("click", () => {
+  const prompt = document.getElementById("aiRefinePrompt").value;
+  if (!prompt) return alert("Please type an instruction first!");
+  alert(
+    "AI Editor is processing your request...\n\n(This will dynamically update the DOCX in the next feature patch!)",
+  );
+});

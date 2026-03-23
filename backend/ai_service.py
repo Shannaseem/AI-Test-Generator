@@ -32,7 +32,7 @@ def extract_test_data(text, files_data=[], short_t="8", short_a="5", long_t="3",
 
     master_data = {"mcqs": [], "short_qs": [], "long_qs": []}
 
-    # SMART EXAM PATTERN LOGIC
+    # EXAM PATTERN LOGIC
     if exam_pattern == "board":
         try:
             short_groups_int = int(short_groups)
@@ -44,8 +44,6 @@ def extract_test_data(text, files_data=[], short_t="8", short_a="5", long_t="3",
         parts_rule = "Do NOT divide long questions into parts. Keep them as single full questions."
 
     total_short_needed = int(short_t) * short_groups_int
-    
-    # MAGIC BOX OVERRIDE
     user_magic = f"CRITICAL USER INSTRUCTION: {magic_prompt}" if magic_prompt else "Standard comprehensive extraction."
 
     if bilingual == "yes":
@@ -55,16 +53,19 @@ def extract_test_data(text, files_data=[], short_t="8", short_a="5", long_t="3",
         language_rule = "Generate all questions in English only. Do NOT include any '_ur' fields."
         json_schema = '{"mcqs": [{"q_en": "...", "a_en": "...", "b_en": "...", "c_en": "...", "d_en": "...", "answer": "a"}], "short_qs": [{"text_en": "..."}], "long_qs": [{"text_en": "..."}]}'
 
-    # SUPER STRICT PROMPT
+    # SUPER STRICT PROMPT FOR EXISTING PAPERS
     prompt_instruction = f"""
 You are a highly advanced Educational Test Creator AI. 
-Your task is to analyze ALL provided content (Text, PDF text, and Images) deeply and comprehensively.
-DO NOT skip any concepts.
+Analyze ALL provided content (Text, PDF text, and Images) deeply.
+
+CRITICAL RULE FOR EXISTING EXAM PAPERS:
+If the uploaded document or image is ALREADY a test/exam paper, YOUR SOLE JOB IS TO EXACTLY EXTRACT ITS QUESTIONS. 
+DO NOT invent new questions or hallucinate content unless the requested number exceeds the available questions in the document. 
 
 REQUIREMENTS:
-1. Extract or generate highly relevant MCQs from the material. Do not miss important details.
-2. Generate exactly {total_short_needed} Short Questions.
-3. Generate exactly {long_t} Long Questions. {parts_rule}
+1. Extract the MCQs accurately from the material.
+2. Extract exactly {total_short_needed} Short Questions.
+3. Extract exactly {long_t} Long Questions. {parts_rule}
 4. {language_rule}
 5. {user_magic}
 
@@ -74,7 +75,7 @@ Return ONLY a valid JSON object matching this schema exactly. NO markdown, NO ex
 Note: For long questions with parts, use "a) text\\nb) text".
 """
 
-    model = genai.GenerativeModel(model_name='gemini-2.5-flash', generation_config={"max_output_tokens": 8192, "temperature": 0.4})
+    model = genai.GenerativeModel(model_name='gemini-2.5-flash', generation_config={"max_output_tokens": 8192, "temperature": 0.3})
 
     def process_item_with_ai(content_list):
         global current_key_index
@@ -104,7 +105,6 @@ Note: For long questions with parts, use "a) text\\nb) text".
                 else: return {"mcqs": [], "short_qs": [], "long_qs": []}
         return {"mcqs": [], "short_qs": [], "long_qs": []}
 
-    # COMBINING ALL DATA INTO A SINGLE CALL FOR BETTER AI UNDERSTANDING
     ai_payload = [prompt_instruction]
     
     if text and text.strip():
@@ -126,9 +126,6 @@ Note: For long questions with parts, use "a) text\\nb) text".
     return master_data
 
 
-# ==========================================
-# NEW: LIVE AI EDITOR FUNCTION
-# ==========================================
 def refine_test_data(current_json_str, refine_prompt):
     global current_key_index
     model = genai.GenerativeModel(model_name='gemini-2.5-flash', generation_config={"max_output_tokens": 8192, "temperature": 0.5})
@@ -142,8 +139,6 @@ def refine_test_data(current_json_str, refine_prompt):
 
     Apply the requested changes to the JSON structure. 
     - Keep the exact same JSON keys (`mcqs`, `short_qs`, `long_qs`).
-    - If they asked to add questions, add them. If they asked to replace, replace them.
-    - DO NOT change the structure. DO NOT add markdown text outside the JSON.
     - Return ONLY the updated valid JSON.
     """
     
