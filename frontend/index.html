@@ -19,7 +19,6 @@
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
     />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
@@ -179,7 +178,6 @@
                     min="1"
                     required
                     placeholder="e.g. 8"
-                    value="8"
                   />
                 </div>
                 <div class="input-group">
@@ -190,7 +188,6 @@
                     min="1"
                     required
                     placeholder="e.g. 5"
-                    value="5"
                   />
                 </div>
                 <div class="input-group">
@@ -201,7 +198,6 @@
                     min="1"
                     required
                     placeholder="e.g. 3"
-                    value="3"
                   />
                 </div>
                 <div class="input-group">
@@ -212,7 +208,6 @@
                     min="1"
                     required
                     placeholder="e.g. 2"
-                    value="2"
                   />
                 </div>
                 <div class="input-group full">
@@ -222,7 +217,6 @@
                     id="longMarks"
                     required
                     placeholder="e.g. 9 or 4+5"
-                    value="5"
                   />
                 </div>
               </div>
@@ -376,7 +370,6 @@
               Rendering Original Word Document Page-by-Page...
             </p>
           </div>
-
           <iframe
             id="docPreviewFrame"
             class="hidden"
@@ -397,21 +390,18 @@
           </div>
 
           <div class="btn-row">
-            <button type="button" id="downloadWordBtn" class="generate-btn">
-              <i class="fa-solid fa-file-word"></i> Download Exact Word File
-            </button>
             <button
               type="button"
-              id="downloadPdfBtn"
-              class="generate-btn pdf-btn"
+              id="downloadWordBtn"
+              class="generate-btn"
+              style="width: 100%"
             >
-              <i class="fa-solid fa-file-pdf"></i> Download PDF
+              <i class="fa-solid fa-file-word"></i> Download Exact Word File
             </button>
           </div>
         </div>
       </div>
     </div>
-
     <script src="script.js"></script>
   </body>
 </html>

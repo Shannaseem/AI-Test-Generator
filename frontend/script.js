@@ -2,13 +2,8 @@ document.getElementById("testDate").valueAsDate = new Date();
 
 let selectedFiles = [];
 let currentDocxFile = null;
-let currentPdfFile = null;
-
 const BASE_URL = "https://ai-test-generator-2hsf.onrender.com";
 
-// ==========================================
-// UI & NETWORK STATE
-// ==========================================
 function updateOnlineStatus() {
   const status = document.getElementById("networkStatus");
   const text = document.getElementById("networkText");
@@ -30,7 +25,6 @@ window.addEventListener("online", updateOnlineStatus);
 window.addEventListener("offline", updateOnlineStatus);
 updateOnlineStatus();
 
-// Shows/Hides only the Short Q Groups option based on Exam Pattern
 document.getElementById("examPattern").addEventListener("change", function (e) {
   const boardGroup = document.getElementById("boardConfigGroup");
   if (e.target.value === "board") {
@@ -40,9 +34,6 @@ document.getElementById("examPattern").addEventListener("change", function (e) {
   }
 });
 
-// ==========================================
-// DRAG & DROP FILES
-// ==========================================
 const dropZone = document.getElementById("dropZone");
 const fileInput = document.getElementById("fileInput");
 const previewContainer = document.getElementById("previewContainer");
@@ -109,7 +100,6 @@ function renderPreviews() {
       removeFile(index);
     };
     item.appendChild(btn);
-
     if (file.type.startsWith("image/")) {
       const img = document.createElement("img");
       img.src = URL.createObjectURL(file);
@@ -123,9 +113,6 @@ function renderPreviews() {
   });
 }
 
-// ==========================================
-// FORM DATA BUILDER
-// ==========================================
 function buildBaseFormData() {
   const fd = new FormData();
   fd.append("academy_name", document.getElementById("academyName").value);
@@ -150,14 +137,12 @@ function buildBaseFormData() {
       : "",
   );
 
-  // Set Groups based on Pattern
   if (pattern === "board") {
     fd.append("short_groups", document.getElementById("shortGroups").value);
   } else {
     fd.append("short_groups", "1");
   }
 
-  // Quantities are ALWAYS sent from the UI fields now
   fd.append("short_total", document.getElementById("shortTotal").value);
   fd.append("short_attempt", document.getElementById("shortAttempt").value);
   fd.append("long_total", document.getElementById("longTotal").value);
@@ -167,9 +152,6 @@ function buildBaseFormData() {
   return fd;
 }
 
-// ==========================================
-// MAIN PROCESS: GENERATE TEST
-// ==========================================
 let simProgress = null;
 
 document
@@ -196,7 +178,6 @@ document
       '<i class="fa-solid fa-spinner fa-spin"></i> Analyzing & Processing...';
     pContainer.classList.remove("hidden");
 
-    // PERCENTAGE PROGRESS BAR
     let percent = 0;
     pFill.style.width = "0%";
     pPercent.innerText = "0%";
@@ -224,7 +205,6 @@ document
 
       const data = await response.json();
       currentDocxFile = data.docx_filename;
-      currentPdfFile = data.pdf_filename;
 
       clearInterval(simProgress);
       pFill.style.width = "100%";
@@ -249,9 +229,6 @@ document
     }
   });
 
-// ==========================================
-// PREVIEW MODAL LOGIC (MS Word Viewer)
-// ==========================================
 function openPreviewModal(docxFilename) {
   const modal = document.getElementById("previewModal");
   const iframe = document.getElementById("docPreviewFrame");
@@ -261,9 +238,9 @@ function openPreviewModal(docxFilename) {
   iframe.classList.add("hidden");
   loader.classList.remove("hidden");
 
-  // Live MS Word Viewer!
+  // 🔥 DOUBLE CACHE BUSTER: ?t=Date.now() forces Microsoft to fetch the NEW file!
   const fileUrl = `${BASE_URL}/get-file/${docxFilename}`;
-  const viewerUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(fileUrl)}`;
+  const viewerUrl = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(fileUrl)}&t=${Date.now()}`;
 
   iframe.src = viewerUrl;
 
@@ -283,39 +260,20 @@ if (closeBtn) {
   });
 }
 
-// ==========================================
-// DOWNLOAD HANDLERS (Safely Checked)
-// ==========================================
-async function downloadFile(filename, isPdf) {
-  if (!filename) {
-    if (isPdf) {
-      alert(
-        "⚠️ Server PDF engine busy. \n\nPRO TIP: Click 'Download Exact Word File' and use MS Word to 'Save As PDF' for perfect formatting!",
-      );
-    }
-    return;
-  }
-
-  const url = `${BASE_URL}/get-file/${filename}`;
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
+const wordBtn = document.getElementById("downloadWordBtn");
+if (wordBtn) {
+  wordBtn.addEventListener("click", () => {
+    if (!currentDocxFile) return;
+    const url = `${BASE_URL}/get-file/${currentDocxFile}`;
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = currentDocxFile;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  });
 }
 
-const wordBtn = document.getElementById("downloadWordBtn");
-if (wordBtn)
-  wordBtn.addEventListener("click", () => downloadFile(currentDocxFile, false));
-
-const pdfBtn = document.getElementById("downloadPdfBtn");
-if (pdfBtn)
-  pdfBtn.addEventListener("click", () => downloadFile(currentPdfFile, true));
-
-// ==========================================
-// AI REFINE BUTTON (Safely Checked)
-// ==========================================
 const refineBtn = document.getElementById("aiRefineBtn");
 if (refineBtn) {
   refineBtn.addEventListener("click", () => {
